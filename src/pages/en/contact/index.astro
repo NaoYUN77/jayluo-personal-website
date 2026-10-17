@@ -1,0 +1,34 @@
+---
+export const prerender = true
+import PageLayout from '@/layouts/CommonPage.astro'
+
+const headings = [
+  { depth: 2, slug: 'how-to-reach', text: 'How to reach me' },
+  { depth: 2, slug: 'before-you-write', text: 'Before you write' }
+]
+---
+
+<PageLayout title='Contact' {headings} info='/en/contact'>
+  <p>Email is the most reliable way to reach me. Replace the placeholder address below with your own.</p>
+
+  <h2 id='how-to-reach'>How to reach me</h2>
+  <ul>
+    <li>
+      Email: <a href='mailto:you@example.com'>you@example.com</a>
+    </li>
+    <li>
+      GitHub: <a href='https://github.com/yourname' target='_blank' rel='noopener noreferrer'
+        >github.com/yourname</a
+      >
+    </li>
+    <li>
+      X: <a href='https://x.com/yourname' target='_blank' rel='noopener noreferrer'>@yourname</a>
+    </li>
+  </ul>
+
+  <h2 id='before-you-write'>Before you write</h2>
+  <p>
+    A sentence or two about who you are and what you want is enough. Technical questions, project
+    collaborations, and corrections are all welcome. Ads and mass mail will not get a reply.
+  </p>
+</PageLayout>

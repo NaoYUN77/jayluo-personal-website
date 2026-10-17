@@ -1,0 +1,577 @@
+---
+import { Icon } from 'astro-pure/user'
+import type { Lang } from '@/i18n/ui'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const isEn = lang === 'en'
+const copy = isEn
+  ? {
+      eyebrow: 'COMMAND SEARCH',
+      title: 'Search the index',
+      close: 'Close search',
+      placeholder: 'Search posts, notes, and projects...',
+      empty: 'Type a title, topic, tag, or project name.',
+      hint: 'Search across every published entry',
+      shortcut: 'Ctrl K to open'
+    }
+  : {
+      eyebrow: 'COMMAND SEARCH',
+      title: '搜索整个站点',
+      close: '关闭搜索',
+      placeholder: '搜索博客、笔记和项目...',
+      empty: '输入标题、主题、标签或项目名称。',
+      hint: '覆盖所有已发布内容',
+      shortcut: 'Ctrl K 打开'
+    }
+---
+
+<site-search-dialog
+  data-lang={lang}
+  data-searching={isEn ? 'Searching...' : '搜索中...'}
+  data-no-results={isEn ? 'No matching entries.' : '没有找到匹配内容。'}
+  data-result={isEn ? 'result' : '条结果'}
+  data-results={isEn ? 'results' : '条结果'}
+  data-failed={isEn ? 'Search failed. Please try again.' : '搜索失败，请重试。'}
+  data-post={isEn ? 'Post' : '文章'}
+  data-note={isEn ? 'Note' : '笔记'}
+  data-project={isEn ? 'Project' : '项目'}
+>
+  <dialog
+    class='site-search-dialog'
+    data-site-search-dialog
+    aria-labelledby='site-search-title'
+  >
+    <div class='site-search-panel'>
+      <header class='site-search-head'>
+        <div>
+          <p class='site-search-eyebrow'>{copy.eyebrow}</p>
+          <h2 id='site-search-title'>{copy.title}</h2>
+        </div>
+        <button
+          type='button'
+          class='site-search-close'
+          data-site-search-close
+          aria-label={copy.close}
+        >
+          <span aria-hidden='true'>×</span>
+        </button>
+      </header>
+
+      <label class='site-search-field'>
+        <Icon name='search' class='site-search-icon' />
+        <span class='sr-only'>{copy.title}</span>
+        <input
+          type='search'
+          data-site-search-input
+          placeholder={copy.placeholder}
+          autocomplete='off'
+          spellcheck='false'
+        />
+        <kbd>ESC</kbd>
+      </label>
+
+      <div class='site-search-status' data-site-search-status aria-live='polite'>
+        {copy.empty}
+      </div>
+      <ol class='site-search-results' data-site-search-results></ol>
+
+      <footer class='site-search-foot'>
+        <span>{copy.hint}</span>
+        <span class='site-search-shortcut'>{copy.shortcut}</span>
+      </footer>
+    </div>
+  </dialog>
+</site-search-dialog>
+
+<script>
+  type SearchCollection = 'blog' | 'notes' | 'project'
+
+  type SearchItem = {
+    collection: SearchCollection
+    title: string
+    description?: string
+    url: string
+    date: string
+    tags: string[]
+    excerpt: string
+  }
+
+  class SiteSearchDialog extends HTMLElement {
+    private dialog: HTMLDialogElement | null = null
+    private input: HTMLInputElement | null = null
+    private status: HTMLElement | null = null
+    private results: HTMLOListElement | null = null
+    private timer: ReturnType<typeof setTimeout> | undefined
+    private request: AbortController | undefined
+    private previousOverflow = ''
+
+    connectedCallback() {
+      if (this.dataset.ready === 'true') return
+      this.dataset.ready = 'true'
+
+      this.dialog = this.querySelector('[data-site-search-dialog]')
+      this.input = this.querySelector('[data-site-search-input]')
+      this.status = this.querySelector('[data-site-search-status]')
+      this.results = this.querySelector('[data-site-search-results]')
+
+      document.addEventListener('click', this.handleDocumentClick)
+      document.addEventListener('keydown', this.handleDocumentKeydown)
+      this.input?.addEventListener('input', this.handleInput)
+      this.dialog?.addEventListener('close', this.handleClose)
+      this.dialog?.addEventListener('click', this.handleBackdropClick)
+    }
+
+    disconnectedCallback() {
+      document.removeEventListener('click', this.handleDocumentClick)
+      document.removeEventListener('keydown', this.handleDocumentKeydown)
+      this.input?.removeEventListener('input', this.handleInput)
+      this.dialog?.removeEventListener('close', this.handleClose)
+      this.dialog?.removeEventListener('click', this.handleBackdropClick)
+    }
+
+    private open() {
+      if (!this.dialog || this.dialog.open) return
+      this.previousOverflow = document.documentElement.style.overflow
+      document.documentElement.style.overflow = 'hidden'
+      this.dialog.showModal()
+      window.requestAnimationFrame(() => {
+        this.input?.focus()
+        this.input?.select()
+      })
+    }
+
+    private close() {
+      if (!this.dialog?.open) return
+      this.dialog.close()
+    }
+
+    private handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+
+      if (target.closest('[data-site-search-open]')) {
+        event.preventDefault()
+        this.open()
+        return
+      }
+
+      if (target.closest('[data-site-search-close]')) {
+        event.preventDefault()
+        this.close()
+        return
+      }
+
+      if (target.closest('[data-site-search-results] a')) {
+        this.close()
+      }
+    }
+
+    private handleDocumentKeydown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        this.open()
+      }
+    }
+
+    private handleBackdropClick = (event: MouseEvent) => {
+      if (event.target === this.dialog) this.close()
+    }
+
+    private handleClose = () => {
+      document.documentElement.style.overflow = this.previousOverflow
+      this.request?.abort()
+      this.timer && clearTimeout(this.timer)
+    }
+
+    private handleInput = () => {
+      if (this.timer) clearTimeout(this.timer)
+      this.timer = setTimeout(this.runSearch, 160)
+    }
+
+    private isSearchable(query: string) {
+      return query.length >= 2 || /[\u3400-\u9fff]/.test(query)
+    }
+
+    private runSearch = async () => {
+      const query = this.input?.value.trim() ?? ''
+      this.request?.abort()
+
+      if (!this.isSearchable(query)) {
+        this.setEmpty(this.dataset.lang === 'en' ? 'Type at least 2 characters.' : '至少输入 2 个字符。')
+        return
+      }
+
+      this.request = new AbortController()
+      if (this.status) this.status.textContent = this.dataset.searching ?? ''
+
+      try {
+        const lang = this.dataset.lang === 'en' ? 'en' : 'zh'
+        const response = await fetch(
+          `/api/search.json?q=${encodeURIComponent(query)}&limit=16&lang=${lang}`,
+          { signal: this.request.signal }
+        )
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const payload = (await response.json()) as { results: SearchItem[] }
+        this.renderResults(payload.results)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        this.setEmpty(this.dataset.failed ?? '')
+      }
+    }
+
+    private setEmpty(message: string) {
+      if (this.status) this.status.textContent = message
+      this.results?.replaceChildren()
+    }
+
+    private renderResults(items: SearchItem[]) {
+      if (!this.results || !this.status) return
+
+      this.results.replaceChildren(...items.map((item) => this.createResult(item)))
+      if (items.length === 0) {
+        this.status.textContent = this.dataset.noResults ?? ''
+        return
+      }
+
+      const unit = items.length === 1 ? this.dataset.result : this.dataset.results
+      this.status.textContent = `${items.length} ${unit ?? ''}`
+    }
+
+    private createResult(item: SearchItem) {
+      const li = document.createElement('li')
+      const link = document.createElement('a')
+      link.className = 'site-search-result'
+      link.href = item.url
+
+      const kind = document.createElement('span')
+      kind.className = 'site-search-kind'
+      kind.dataset.kind = item.collection
+      kind.textContent =
+        item.collection === 'blog'
+          ? (this.dataset.post ?? '')
+          : item.collection === 'notes'
+            ? (this.dataset.note ?? '')
+            : (this.dataset.project ?? '')
+
+      const body = document.createElement('span')
+      body.className = 'site-search-result-body'
+
+      const title = document.createElement('strong')
+      title.textContent = item.title
+
+      const excerpt = document.createElement('span')
+      excerpt.className = 'site-search-excerpt'
+      excerpt.textContent = item.excerpt || item.description || ''
+
+      body.append(title, excerpt)
+
+      const meta = document.createElement('span')
+      meta.className = 'site-search-meta'
+      meta.textContent = [item.date, item.tags.slice(0, 2).join(' / ')].filter(Boolean).join(' · ')
+
+      link.append(kind, body, meta)
+      li.append(link)
+      return li
+    }
+  }
+
+  if (!customElements.get('site-search-dialog')) {
+    customElements.define('site-search-dialog', SiteSearchDialog)
+  }
+</script>
+
+<style is:global>
+  .site-search-dialog {
+    width: min(46rem, calc(100vw - 2rem));
+    max-width: none;
+    margin: min(11vh, 5.5rem) auto auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: hsl(var(--foreground));
+    overflow: visible;
+  }
+
+  .site-search-dialog::backdrop {
+    background: hsl(220 16% 8% / 0.44);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+  }
+
+  .site-search-panel {
+    overflow: hidden;
+    border: 1px solid hsl(var(--glass-edge));
+    border-radius: 18px;
+    background: hsl(var(--popover) / 0.97);
+    box-shadow:
+      inset 0 1px 0 hsl(var(--glass-rim)),
+      0 1px 2px hsl(var(--glass-contact)),
+      0 32px 90px -30px hsl(var(--glass-shade));
+  }
+
+  .site-search-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.35rem 0.9rem;
+  }
+
+  .site-search-eyebrow {
+    margin: 0 0 0.35rem;
+    color: hsl(var(--muted-foreground));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+
+  .site-search-head h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .site-search-close {
+    display: inline-flex;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid hsl(var(--border));
+    border-radius: 10px;
+    background: hsl(var(--background) / 0.72);
+    color: hsl(var(--muted-foreground));
+    font-size: 1.3rem;
+    line-height: 1;
+    transition:
+      color 0.18s ease,
+      border-color 0.18s ease,
+      background-color 0.18s ease;
+  }
+
+  .site-search-close:hover {
+    border-color: hsl(var(--foreground) / 0.24);
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground));
+  }
+
+  .site-search-field {
+    display: flex;
+    min-height: 3.9rem;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 0 1.35rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 12px;
+    background: hsl(var(--background) / 0.64);
+    padding: 0 1rem;
+  }
+
+  .site-search-field:focus-within {
+    border-color: hsl(var(--primary) / 0.66);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+  }
+
+  .site-search-icon {
+    flex: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .site-search-field input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: hsl(var(--foreground));
+    font: inherit;
+    font-size: 1.02rem;
+    outline: none;
+  }
+
+  .site-search-field input::placeholder {
+    color: hsl(var(--muted-foreground) / 0.72);
+  }
+
+  .site-search-field kbd,
+  .site-search-shortcut {
+    flex: none;
+    border: 1px solid hsl(var(--border));
+    border-bottom-color: hsl(var(--foreground) / 0.2);
+    border-radius: 6px;
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.05em;
+    padding: 0.22rem 0.38rem;
+  }
+
+  .site-search-status {
+    min-height: 1.2rem;
+    padding: 0.8rem 1.45rem 0.35rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.78rem;
+  }
+
+  .site-search-results {
+    max-height: min(52vh, 27rem);
+    margin: 0;
+    padding: 0 0.65rem 0.35rem;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  .site-search-results:empty {
+    display: none;
+  }
+
+  .site-search-result {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.85rem;
+    align-items: start;
+    padding: 0.82rem;
+    border-radius: 11px;
+    color: inherit;
+    text-decoration: none;
+    transition:
+      background-color 0.16s ease,
+      color 0.16s ease;
+  }
+
+  .site-search-result:hover,
+  .site-search-result:focus-visible {
+    background: hsl(var(--foreground) / 0.055);
+    color: inherit;
+    outline: none;
+  }
+
+  .site-search-result:focus-visible {
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.45);
+  }
+
+  .site-search-kind {
+    display: inline-flex;
+    min-width: 3.1rem;
+    justify-content: center;
+    border: 1px solid hsl(var(--border));
+    border-radius: 7px;
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+    line-height: 1.6rem;
+    text-transform: uppercase;
+  }
+
+  .site-search-kind[data-kind='project'] {
+    border-color: hsl(var(--primary) / 0.24);
+    background: hsl(var(--primary) / 0.09);
+    color: hsl(var(--primary));
+  }
+
+  .site-search-result-body {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .site-search-result-body strong {
+    overflow: hidden;
+    color: hsl(var(--foreground));
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .site-search-excerpt {
+    display: -webkit-box;
+    overflow: hidden;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.82rem;
+    line-height: 1.48;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .site-search-meta {
+    max-width: 9rem;
+    overflow: hidden;
+    color: hsl(var(--muted-foreground));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.65rem;
+    line-height: 1.6rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .site-search-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 1.35rem 1rem;
+    border-top: 1px solid hsl(var(--border) / 0.72);
+    color: hsl(var(--muted-foreground));
+    font-size: 0.72rem;
+  }
+
+  @media (max-width: 640px) {
+    .site-search-dialog {
+      width: calc(100vw - 1rem);
+      margin-top: 0.5rem;
+    }
+
+    .site-search-panel {
+      border-radius: 14px;
+    }
+
+    .site-search-head {
+      padding-inline: 1rem;
+    }
+
+    .site-search-field {
+      margin-inline: 1rem;
+    }
+
+    .site-search-result {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .site-search-meta {
+      display: none;
+    }
+
+    .site-search-foot {
+      padding-inline: 1rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .site-search-dialog[open] {
+      animation: search-dialog-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+
+  @keyframes search-dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+</style>

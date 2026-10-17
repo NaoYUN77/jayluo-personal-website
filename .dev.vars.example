@@ -1,0 +1,11 @@
+# Copy to `.dev.vars` for local API development. Never commit `.dev.vars`.
+CONTENT_API_TOKEN=replace-with-a-long-random-token
+GITHUB_TOKEN=github_pat_replace_me
+GITHUB_OWNER=your-github-username
+GITHUB_REPO=personal-website
+GITHUB_BRANCH=main
+GITHUB_API_BASE_URL=https://api.github.com
+SITE_URL=http://localhost:4321
+DEPLOY_HOOK_URL=
+MAX_MEDIA_BYTES=20971520
+MAX_AVATAR_BYTES=5242880

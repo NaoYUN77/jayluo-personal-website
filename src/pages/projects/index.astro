@@ -1,0 +1,48 @@
+---
+import { getProjects, type ProjectStatus } from '@/data/projects'
+
+import PageLayout from '@/layouts/CommonPage.astro'
+import ProjectSection from '@/components/projects/ProjectSection.astro'
+
+export const prerender = true
+
+const groups: { status: ProjectStatus; title: string }[] = [
+  { status: 'active', title: '正在做' },
+  { status: 'paused', title: '暂停' },
+  { status: 'archived', title: '已归档' }
+]
+
+const projects = getProjects('zh')
+const toCard = (project: (typeof projects)[number]) => ({
+  id: project.id,
+  name: project.name,
+  description: `${project.description}${project.stack.length ? ` · ${project.stack.join(' / ')}` : ''}`,
+  links: [
+    ...(project.repo ? [{ type: 'github', href: project.repo }] : []),
+    ...(project.demo ? [{ type: 'site', href: project.demo }] : [])
+  ]
+})
+
+const headings = groups.map((group) => ({
+  depth: 2 as const,
+  slug: group.status,
+  text: group.title
+}))
+---
+
+<PageLayout title='项目' {headings} info={{ slug: '/projects', hideComment: true }} surface={false}>
+  <p>这里记录我做过的东西。按状态分组：还在维护的、暂时停下的、以及归档保留的。</p>
+
+  {
+    groups.map((group) => {
+      const items = projects.filter((project) => project.status === group.status)
+      if (!items.length) return null
+      return (
+        <>
+          <h2 id={group.status}>{group.title}</h2>
+          <ProjectSection analyticsSection={group.status} project={items.map(toCard)} />
+        </>
+      )
+    })
+  }
+</PageLayout>

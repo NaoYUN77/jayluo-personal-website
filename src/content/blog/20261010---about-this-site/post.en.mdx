@@ -1,0 +1,35 @@
+---
+title: How This Site Is Built
+description: A second take on an open-source Astro theme, with blog, notes, and projects in one place.
+publishDate: 2026-10-10
+updatedDate: 2026-10-17
+tags: ['astro', 'meta']
+language: en
+translationKey: '20261010---about-this-site/post'
+---
+
+## Stack
+
+- **Astro 5**: content-first, zero JavaScript by default.
+- **TypeScript + Content Collections**: a malformed frontmatter field fails the build.
+- **UnoCSS**: keeps styling consistent with the theme.
+- **Bilingual routes**: Chinese at the root, English under `/en`.
+
+## Three content types
+
+Content lives in three separate collections:
+
+```text
+src/content/
+  blog/      # finished posts, with optional English mirrors
+  notes/     # short notes with status and tags
+  projects/  # project data currently in src/data/projects.ts
+```
+
+## Navigation
+
+The Chinese navigation uses Chinese labels, the English navigation uses English labels, and the language button in the header switches between them.
+
+## Deployment
+
+The output is a standard static site, deployable to Vercel, Cloudflare Pages, or any static host.

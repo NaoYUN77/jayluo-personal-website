@@ -1,0 +1,4 @@
+/archive /notes 301
+/en/archive /en/notes 301
+/archive/* /notes/:splat 301
+/en/archive/* /en/notes/:splat 301

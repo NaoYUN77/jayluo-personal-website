@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "jayluo-blog",
+  "compatibility_date": "2026-10-17",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "./dist",
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "jayluo-media"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

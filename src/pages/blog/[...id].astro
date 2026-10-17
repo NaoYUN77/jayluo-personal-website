@@ -1,0 +1,31 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content'
+import { detailAvailable, published } from '@/lib/seo/drafts'
+
+import { sortMDByDate } from 'astro-pure/server'
+import PostLayout from '@/layouts/BlogPost.astro'
+
+export const prerender = true
+
+export async function getStaticPaths() {
+  const posts = sortMDByDate(await getCollection('blog')).filter((post) =>
+    detailAvailable(post.data.draft, import.meta.env.DRAFT_PREVIEW, import.meta.env.DEV)
+  )
+  return posts.map((post) => ({
+    params: { id: post.id },
+    props: { post, posts: posts.filter(published) }
+  }))
+}
+
+type Props = {
+  post: CollectionEntry<'blog'>
+  posts: CollectionEntry<'blog'>[]
+}
+
+const { post, posts } = Astro.props
+const { Content, headings, remarkPluginFrontmatter } = await render(post)
+---
+
+<PostLayout {post} {posts} {headings} {remarkPluginFrontmatter}>
+  <Content />
+</PostLayout>

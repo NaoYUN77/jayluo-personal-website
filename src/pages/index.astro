@@ -1,0 +1,137 @@
+---
+import { getCollection } from 'astro:content'
+import { getProjects } from '@/data/projects'
+
+import { PostPreview } from 'astro-pure/components/pages'
+import { getBlogCollection, sortMDByDate } from 'astro-pure/server'
+import PageLayout from '@/layouts/BaseLayout.astro'
+import HomeHero from '@/components/home/HomeHero.astro'
+import Section from '@/components/home/Section.astro'
+import ProjectSection from '@/components/projects/ProjectSection.astro'
+import config from '@/site-config'
+
+export const prerender = true
+
+const MAX_POSTS = 5
+const MAX_NOTES = 4
+
+const posts = sortMDByDate(await getBlogCollection())
+  .filter((post) => !post.data.draft)
+  .slice(0, MAX_POSTS)
+
+const notes = (await getCollection('notes'))
+  .filter((entry) => !entry.data.draft)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, MAX_NOTES)
+
+const noteStatusLabels: Record<string, string> = {
+  'in-progress': '进行中',
+  incomplete: '待补充',
+  ready: '已整理',
+  archived: '已归档'
+}
+
+const featuredProjects = getProjects('zh').filter((project) => project.featured)
+const projectCards = featuredProjects.map((project) => ({
+  id: project.id,
+  name: project.name,
+  description: project.description,
+  links: [
+    ...(project.repo ? [{ type: 'github', href: project.repo }] : []),
+    ...(project.demo ? [{ type: 'site', href: project.demo }] : [])
+  ]
+}))
+---
+
+<PageLayout meta={{ title: 'Home' }}>
+  <main class='home-page'>
+    <HomeHero
+      lang='zh'
+      name={config.author}
+      description={config.description ?? ''}
+      postCount={posts.length}
+      noteCount={notes.length}
+      projectCount={projectCards.length}
+    />
+
+    <div id='content' class='home-sections animate'>
+      {
+        posts.length > 0 && (
+          <Section title='博客' index='01' meta={`${posts.length} 篇 · 最近更新`} id='blog'>
+            <ul class='home-list glass-surface home-post-list'>
+              {posts.map((post) => (
+                <PostPreview class='home-post-card home-list-row' post={post} />
+              ))}
+            </ul>
+            <a class='home-more' href='/blog'>全部文章 <span aria-hidden='true'>→</span></a>
+          </Section>
+        )
+      }
+
+      {
+        notes.length > 0 && (
+          <Section title='笔记' index='02' meta={`${notes.length} 条 · 持续整理`} id='notes'>
+            <ul class='home-list glass-surface home-note-list'>
+              {notes.map((note) => (
+                <li class='home-list-row'>
+                  <a
+                    class='home-note-row group/card flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-4'
+                    href={`/notes/${note.id}`}
+                    data-astro-prefetch
+                  >
+                    <time
+                      class='min-w-[95px] shrink-0 text-xs text-muted-foreground'
+                      datetime={note.data.date.toISOString()}
+                    >
+                      {note.data.date.toLocaleDateString('zh-CN', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </time>
+                    <span class='flex flex-col gap-1'>
+                      <span class='flex flex-wrap items-center gap-2'>
+                        <span class='font-medium'>{note.data.title}</span>
+                        <span class='rounded-md bg-background/55 px-2 py-0.5 text-xs text-muted-foreground group-hover/card:bg-background/75'>
+                          {noteStatusLabels[note.data.status] ?? note.data.status}
+                        </span>
+                      </span>
+                      {note.data.description && (
+                        <span class='text-sm text-muted-foreground'>{note.data.description}</span>
+                      )}
+                    </span>
+                    <span
+                      aria-hidden='true'
+                      class='ms-auto hidden text-muted-foreground transition-all duration-300 group-hover/card:translate-x-0.5 group-hover/card:text-primary sm:block'
+                    >
+                      →
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a class='home-more' href='/notes'>全部笔记 <span aria-hidden='true'>→</span></a>
+          </Section>
+        )
+      }
+
+      {
+        projectCards.length > 0 && (
+          <Section
+            title='项目'
+            index='03'
+            meta={`${projectCards.length} 个 · 按状态归档`}
+            id='projects'
+          >
+            <ProjectSection
+              class='home-project-grid'
+              analyticsSection='home_featured'
+              project={projectCards}
+            />
+            <a class='home-more' href='/projects'>全部项目 <span aria-hidden='true'>→</span></a>
+          </Section>
+        )
+      }
+    </div>
+  </main>
+</PageLayout>

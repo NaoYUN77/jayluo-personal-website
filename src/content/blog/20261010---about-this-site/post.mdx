@@ -1,0 +1,33 @@
+---
+title: 这个站点是怎么搭的
+description: 基于 Astro 和开源主题二次开发，把博客、笔记和项目放在同一个站里。
+publishDate: 2026-10-10
+updatedDate: 2026-10-17
+tags: ['Astro', '建站']
+---
+
+## 技术栈
+
+- **Astro 5**：内容优先，默认零 JavaScript。
+- **TypeScript + Content Collections**：frontmatter 写错会在构建时报错。
+- **UnoCSS**：样式与主题保持一致。
+- **中英文路由**：中文在根路径，英文在 `/en` 下。
+
+## 三类内容
+
+内容放在三个独立的 collection 里：
+
+```text
+src/content/
+  blog/      # 完整文章，支持中英镜像
+  notes/     # 短笔记，带状态和标签
+  projects/  # 项目数据目前在 src/data/projects.ts
+```
+
+## 导航
+
+中文导航使用中文标签，英文导航使用英文标签，右上角的语言按钮可以在两种语言之间切换。
+
+## 部署
+
+构建产物是标准的静态站点，可以部署到 Vercel、Cloudflare Pages 或任何静态托管。

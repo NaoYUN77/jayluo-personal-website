@@ -1,0 +1,35 @@
+---
+export const prerender = true
+import PageLayout from '@/layouts/CommonPage.astro'
+
+const headings = [
+  { depth: 2, slug: 'how-to-reach', text: '联系方式' },
+  { depth: 2, slug: 'before-you-write', text: '写信之前' }
+]
+---
+
+<PageLayout title='联系' {headings} info='/contact'>
+  <p>
+    最直接的方式是发邮件。把下面的占位地址换成你自己的邮箱。
+  </p>
+
+  <h2 id='how-to-reach'>联系方式</h2>
+  <ul>
+    <li>
+      邮箱：<a href='mailto:you@example.com'>you@example.com</a>
+    </li>
+    <li>
+      GitHub：<a href='https://github.com/yourname' target='_blank' rel='noopener noreferrer'
+        >github.com/yourname</a
+      >
+    </li>
+    <li>
+      X：<a href='https://x.com/yourname' target='_blank' rel='noopener noreferrer'>@yourname</a>
+    </li>
+  </ul>
+
+  <h2 id='before-you-write'>写信之前</h2>
+  <p>
+    请简单说明来意和背景，一两句话即可。技术讨论、项目合作、文章纠错都欢迎；广告和群发邮件不会回复。
+  </p>
+</PageLayout>

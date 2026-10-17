@@ -1,0 +1,332 @@
+---
+import { Icon } from 'astro-pure/user'
+import type { Lang } from '@/i18n/ui'
+
+interface Props {
+  lang: Lang
+  name: string
+  description: string
+  postCount: number
+  noteCount: number
+  projectCount: number
+}
+
+const { lang, name, description, postCount, noteCount, projectCount } = Astro.props
+const isEn = lang === 'en'
+const copy = isEn
+  ? {
+      eyebrow: 'JAYLUO / PERSONAL INDEX',
+      status: 'Building in public',
+      blog: 'Read the blog',
+      projects: 'See projects',
+      github: 'GitHub',
+      index: ['Writing', 'Notes', 'Projects']
+    }
+  : {
+      eyebrow: 'JAYLUO / PERSONAL INDEX',
+      status: '持续构建中',
+      blog: '读博客',
+      projects: '看项目',
+      github: 'GitHub',
+      index: ['博客', '笔记', '项目']
+    }
+
+const blogHref = isEn ? '/en/blog' : '/blog'
+const projectsHref = isEn ? '/en/projects' : '/projects'
+const githubHref = 'https://github.com/NaoYUN77'
+const pad = (count: number) => String(count).padStart(2, '0')
+---
+
+<section class='home-hero animate' aria-labelledby='home-title'>
+  <div class='home-hero-top'>
+    <span class='home-mono'>{copy.eyebrow}</span>
+    <span class='home-live'><i aria-hidden='true'></i>{copy.status}</span>
+  </div>
+
+  <div class='home-hero-main'>
+    <div class='home-avatar'>
+      <img
+        src='/api/v1/avatar'
+        alt={name}
+        loading='eager'
+        fetchpriority='high'
+        decoding='async'
+        width='96'
+        height='96'
+      />
+    </div>
+
+    <div class='home-hero-copy'>
+      <h1 id='home-title'>{name}<span aria-hidden='true'>/</span></h1>
+      <p>{description}</p>
+    </div>
+  </div>
+
+  <div class='home-hero-bottom'>
+    <div class='home-actions'>
+      <a class='home-action home-action-primary' href={blogHref}>
+        <span>{copy.blog}</span>
+        <span aria-hidden='true'>→</span>
+      </a>
+      <a class='home-action' href={projectsHref}>
+        <span>{copy.projects}</span>
+        <span aria-hidden='true'>↗</span>
+      </a>
+      <a
+        class='home-action home-action-icon'
+        href={githubHref}
+        target='_blank'
+        rel='noopener noreferrer'
+        aria-label={copy.github}
+        title={copy.github}
+      >
+        <Icon name='github-circle' class='size-5' />
+      </a>
+    </div>
+
+    <nav class='home-index' aria-label={isEn ? 'Homepage sections' : '首页栏目'}>
+      <a href='#blog'><span>{copy.index[0]}</span><b>{pad(postCount)}</b></a>
+      <a href='#notes'><span>{copy.index[1]}</span><b>{pad(noteCount)}</b></a>
+      <a href='#projects'><span>{copy.index[2]}</span><b>{pad(projectCount)}</b></a>
+    </nav>
+  </div>
+</section>
+
+<style>
+  .home-hero {
+    margin-top: 0.75rem;
+    padding: 1.1rem 0 2.35rem;
+    border-top: 1px solid hsl(var(--border));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .home-hero-top,
+  .home-hero-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .home-mono,
+  .home-live {
+    color: hsl(var(--muted-foreground));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+  }
+
+  .home-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .home-live i {
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+  }
+
+  .home-hero-main {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: clamp(1.2rem, 3vw, 2rem);
+    align-items: center;
+    padding: clamp(2.4rem, 6vw, 4.5rem) 0;
+  }
+
+  .home-avatar {
+    position: relative;
+    width: clamp(5.2rem, 10vw, 6.7rem);
+    aspect-ratio: 1;
+    padding: 0.3rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 24px;
+    background: hsl(var(--card) / 0.72);
+    box-shadow:
+      inset 0 1px 0 hsl(var(--glass-rim)),
+      0 20px 46px -30px hsl(var(--glass-shade));
+  }
+
+  .home-avatar::after {
+    content: '';
+    position: absolute;
+    right: -0.28rem;
+    bottom: -0.28rem;
+    width: 0.7rem;
+    height: 0.7rem;
+    border: 2px solid hsl(var(--background));
+    border-radius: 999px;
+    background: hsl(var(--primary));
+  }
+
+  .home-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 18px;
+    object-fit: cover;
+  }
+
+  .home-hero-copy {
+    min-width: 0;
+  }
+
+  .home-hero-copy h1 {
+    margin: 0;
+    font-size: clamp(3.25rem, 9vw, 6.4rem);
+    font-weight: 650;
+    letter-spacing: -0.075em;
+    line-height: 0.9;
+  }
+
+  .home-hero-copy h1 span {
+    color: hsl(var(--primary));
+    font-weight: 400;
+  }
+
+  .home-hero-copy p {
+    max-width: 38rem;
+    margin: 1.25rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    line-height: 1.65;
+  }
+
+  .home-hero-bottom {
+    align-items: flex-end;
+  }
+
+  .home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .home-action {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 10px;
+    background: hsl(var(--card) / 0.58);
+    padding: 0.55rem 0.9rem;
+    color: hsl(var(--foreground));
+    font-size: 0.86rem;
+    font-weight: 550;
+    text-decoration: none;
+    transition:
+      border-color 0.18s ease,
+      background-color 0.18s ease,
+      color 0.18s ease;
+  }
+
+  .home-action:hover {
+    border-color: hsl(var(--foreground) / 0.24);
+    background: hsl(var(--foreground) / 0.055);
+    color: hsl(var(--foreground));
+  }
+
+  .home-action-primary {
+    border-color: hsl(var(--foreground));
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
+  }
+
+  .home-action-primary:hover {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  .home-action-icon {
+    width: 2.75rem;
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .home-index {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .home-index a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    border-radius: 8px;
+    padding: 0.4rem 0.55rem;
+    color: hsl(var(--muted-foreground));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+  }
+
+  .home-index a:hover {
+    background: hsl(var(--foreground) / 0.05);
+    color: hsl(var(--foreground));
+  }
+
+  .home-index b {
+    color: hsl(var(--foreground) / 0.42);
+    font-weight: 500;
+  }
+
+  @media (max-width: 760px) {
+    .home-hero-main {
+      grid-template-columns: 1fr;
+      align-items: start;
+      padding-block: 2.25rem;
+    }
+
+    .home-avatar {
+      width: 5rem;
+    }
+
+    .home-hero-bottom {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .home-index {
+      width: 100%;
+      justify-content: space-between;
+      border-top: 1px solid hsl(var(--border) / 0.75);
+      padding-top: 0.85rem;
+    }
+  }
+
+  @media (max-width: 460px) {
+    .home-hero-top {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .home-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+    }
+
+    .home-action {
+      gap: 0.65rem;
+    }
+
+    .home-index {
+      gap: 0;
+    }
+
+    .home-index a {
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+  }
+</style>

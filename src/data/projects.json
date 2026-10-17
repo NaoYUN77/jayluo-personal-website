@@ -1,0 +1,43 @@
+[
+  {
+    "id": "personal-website",
+    "name": "Personal Website",
+    "status": "active",
+    "stack": ["Astro", "TypeScript", "Cloudflare"],
+    "repo": "https://github.com/NaoYUN77?tab=repositories",
+    "featured": true,
+    "zh": {
+      "description": "你正在看的这个站点：博客、笔记和项目放在一起，中英文双语导航。"
+    },
+    "en": {
+      "description": "The site you are reading: blog, notes, and projects in one place, with bilingual navigation."
+    }
+  },
+  {
+    "id": "personal-agent",
+    "name": "Personal Agent",
+    "status": "active",
+    "stack": ["TypeScript", "Agents", "Automation"],
+    "repo": "https://github.com/NaoYUN77/personal-agent",
+    "featured": true,
+    "zh": {
+      "description": "面向长期任务的个人 Agent 工作流，处理规划、上下文与多步骤执行。"
+    },
+    "en": {
+      "description": "A personal agent workflow for long-running plans, context, and multi-step execution."
+    }
+  },
+  {
+    "id": "pometo-mode-on-pi",
+    "name": "Pometo Mode",
+    "status": "paused",
+    "stack": ["TypeScript", "Pi", "Developer Tools"],
+    "repo": "https://github.com/NaoYUN77/pometo-mode-on-pi",
+    "zh": {
+      "description": "围绕 Pi 的交互模式实验，探索更自然的开发工作流与界面反馈。"
+    },
+    "en": {
+      "description": "An interaction experiment around Pi, exploring a more natural development workflow."
+    }
+  }
+]

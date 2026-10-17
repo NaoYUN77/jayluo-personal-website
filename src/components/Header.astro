@@ -1,0 +1,370 @@
+---
+import {
+  getLangFromUrl,
+  hasEnAlternate,
+  localizedPath,
+  useTranslations,
+  type Lang
+} from '@/i18n/ui'
+
+import { Icon } from 'astro-pure/user'
+import LanguageSwitcher from '@/components/LanguageSwitcher.astro'
+import config from '@/site-config'
+
+interface Props {
+  lang?: Lang
+}
+
+const lang = (Astro.props.lang ?? getLangFromUrl(Astro.url)) as Lang
+const t = useTranslations(lang)
+
+const menuKeyMap: Record<string, Parameters<typeof t>[0]> = {
+  '/blog': 'nav.blog',
+  '/notes': 'nav.notes',
+  '/curated': 'nav.curated',
+  '/projects': 'nav.projects',
+  '/links': 'nav.links',
+  '/about': 'nav.about',
+  '/contact': 'nav.contact'
+}
+
+// 英文站只展示有英文镜像的菜单项，避免生成 /en/talks 这类 404 链接
+const menu = (config.header?.menu ?? [])
+  .filter((item) => lang !== 'en' || hasEnAlternate(item.link))
+  .map((item) => {
+    const key = menuKeyMap[item.link]
+    const active =
+      Astro.url.pathname === item.link ||
+      Astro.url.pathname.startsWith(`${item.link}/`)
+    return {
+      title: key ? t(key) : item.title,
+      link: localizedPath(item.link, lang),
+      active
+    }
+  })
+
+const homeHref = localizedPath('/', lang)
+---
+
+<header-component
+  class='glass-surface group sticky top-4 z-[70] mb-12 flex min-w-0 max-w-full items-center justify-between gap-4 rounded-xl px-4 py-2.5 sm:rounded-2xl sm:px-5'
+>
+  <a
+    class='z-30 min-w-0 shrink whitespace-nowrap text-xl font-semibold tracking-[-0.03em]'
+    href={homeHref}
+    aria-label='Brand'>{config.title}</a
+  >
+
+  <div class='flex min-w-0 items-center gap-x-2'>
+    {/* Menu links */}
+    <div
+      id='headerExpandContent'
+      class='end-0 start-0 top-12 grid min-w-0 border border-transparent group-[.not-top]:rounded-xl group-[.expanded]:opacity-100 dark:group-[.expanded.not-top]:bg-muted max-sm:absolute max-sm:opacity-0 max-sm:group-[.not-top]:border-border max-sm:group-[.expanded.not-top]:bg-background max-sm:group-[.not-top]:px-4 max-sm:group-[.not-top]:py-2 sm:grid-rows-1'
+    >
+      <div class='flex flex-col items-center justify-center overflow-hidden sm:flex-row'>
+        {
+          menu.map((item) => (
+            <a
+              href={item.link}
+              class:list={[
+                'header-nav-link w-full flex-none grow py-2 text-right font-medium transition-colors hover:text-primary sm:w-fit sm:rounded-lg sm:px-2.5',
+                item.active && 'is-active'
+              ]}
+              aria-label='Nav menu item'
+              aria-current={item.active ? 'page' : undefined}
+            >
+              {item.title}
+            </a>
+          ))
+        }
+        <div class='flex w-full grow flex-row justify-end gap-x-3 sm:w-fit sm:gap-x-5'>
+          <button
+            type='button'
+            class='header-icon-button box-content size-5 rounded-lg p-1.5 sm:rounded-xl'
+            data-site-search-open
+            title={`${t('nav.search')} (Ctrl K)`}
+          >
+            <span class='sr-only'>{t('nav.search')}</span>
+            <Icon name='search' class='size-5' />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* buttons */}
+    <div class='z-30 flex gap-x-3'>
+      <LanguageSwitcher lang={lang} />
+      <button
+        id='toggleDarkMode'
+        class='header-icon-button group/dark relative box-content size-5 rounded-lg p-1.5 sm:rounded-xl'
+      >
+        <span class='sr-only'>{t('nav.toggleDarkMode')}</span>
+        <Icon class='theme-icon system size-5 group-hover/dark:text-primary' name='computer' />
+        <Icon class='theme-icon light size-5 group-hover/dark:text-primary' name='sun' />
+        <Icon class='theme-icon dark size-5 group-hover/dark:text-primary' name='moon' />
+      </button>
+      <button
+        id='toggleMenu'
+        class='header-icon-button rounded-lg p-1.5 sm:hidden sm:rounded-xl'
+        aria-controls='headerExpandContent'
+        aria-expanded='false'
+      >
+        <span class='sr-only'>{t('nav.toggleMenu')}</span>
+        <Icon class='size-5' name='menu' />
+      </button>
+    </div>
+  </div>
+</header-component>
+
+{/* Use inline to load icon quicker firstly */}
+<script is:inline>
+  const toggleDarkModeElement = document.getElementById('toggleDarkMode')
+  if (toggleDarkModeElement) {
+    toggleDarkModeElement.dataset.theme = localStorage.getItem('theme') || 'system'
+  }
+</script>
+<script>
+  import { setTheme, showToast } from 'astro-pure/utils'
+
+  class Header extends HTMLElement {
+    private toggleMenuBtn: HTMLElement | null = null
+    private lastScrollY = 0
+    private scrollFrame: number | null = null
+
+    constructor() {
+      super()
+    }
+
+    private setMenuExpanded(expanded: boolean) {
+      this.classList.toggle('expanded', expanded)
+      this.toggleMenuBtn?.setAttribute('aria-expanded', expanded.toString())
+    }
+
+    private handleDocumentPointerDown = (event: PointerEvent) => {
+      if (!this.classList.contains('expanded')) return
+
+      const target = event.target
+      if (!(target instanceof Element)) return
+
+      if (!this.contains(target)) {
+        this.setMenuExpanded(false)
+        return
+      }
+
+      if (target.closest('a, button')) return
+
+      this.setMenuExpanded(false)
+    }
+
+    private setHeaderVisible(visible: boolean) {
+      this.dataset.show = visible.toString()
+    }
+
+    private handleScroll = () => {
+      if (this.scrollFrame !== null) return
+
+      this.scrollFrame = window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY
+        const delta = currentScrollY - this.lastScrollY
+
+        this.classList.toggle('not-top', currentScrollY > 8)
+
+        if (currentScrollY <= 8) {
+          this.setHeaderVisible(true)
+        } else if (delta > 2) {
+          this.setHeaderVisible(false)
+        } else if (delta < -2) {
+          this.setHeaderVisible(true)
+        }
+
+        this.lastScrollY = currentScrollY
+        this.scrollFrame = null
+      })
+    }
+
+    connectedCallback() {
+      this.lastScrollY = window.scrollY
+      this.classList.toggle('not-top', this.lastScrollY > 8)
+      this.setHeaderVisible(this.lastScrollY <= 8)
+      window.addEventListener('scroll', this.handleScroll, { passive: true })
+
+      const darkModeBtn = this.querySelector('#toggleDarkMode') as HTMLElement
+      darkModeBtn.addEventListener('click', () => {
+        const newTheme = setTheme(undefined, true)
+        darkModeBtn.dataset.theme = newTheme
+        showToast({ message: `Set theme to ${newTheme}` })
+      })
+
+      this.toggleMenuBtn = this.querySelector('#toggleMenu')
+      this.toggleMenuBtn?.addEventListener('click', () => {
+        this.setMenuExpanded(!this.classList.contains('expanded'))
+      })
+
+      document.addEventListener('pointerdown', this.handleDocumentPointerDown)
+    }
+
+    disconnectedCallback() {
+      window.removeEventListener('scroll', this.handleScroll)
+      if (this.scrollFrame !== null) {
+        window.cancelAnimationFrame(this.scrollFrame)
+        this.scrollFrame = null
+      }
+      document.removeEventListener('pointerdown', this.handleDocumentPointerDown)
+    }
+  }
+
+  customElements.define('header-component', Header)
+</script>
+
+<style>
+  header-component {
+    transition:
+      transform 0.3s,
+      opacity 0.2s ease,
+      box-shadow 0.24s ease,
+      border 0.15s,
+      background-color 0.15s;
+
+    &.not-top {
+      background-color: hsl(var(--glass-panel-strong)) !important;
+      box-shadow:
+        inset 0 1px 0 hsl(var(--glass-rim)),
+        inset 0 0 0 1px hsl(var(--glass-inner)),
+        0 1px 2px hsl(var(--glass-contact)),
+        0 16px 38px -20px hsl(var(--glass-shade));
+    }
+    &[data-show='false']:not(.expanded) {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(calc(-100% - 1.5rem));
+    }
+  }
+  header-component.glass-surface {
+    background-color: hsl(var(--glass-panel-strong)) !important;
+  }
+
+  .header-nav-link.is-active {
+    background: hsl(var(--foreground) / 0.06);
+    color: hsl(var(--foreground));
+  }
+
+  .header-nav-link {
+    white-space: nowrap;
+  }
+
+  .header-icon-button {
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+    transition:
+      color 0.18s ease,
+      border-color 0.18s ease,
+      background-color 0.18s ease;
+  }
+
+  .header-icon-button:hover {
+    border-color: hsl(var(--foreground) / 0.24);
+    background: hsl(var(--foreground) / 0.055);
+    color: hsl(var(--foreground));
+  }
+  /* header menu */
+  @media (max-width: 640px) {
+    #headerExpandContent {
+      top: calc(100% + 0.5rem);
+      grid-template-rows: 0fr;
+      transition:
+        opacity 0.3s,
+        padding 0.3s,
+        border-color 0.15s,
+        grid-template-rows 0.3s;
+    }
+    .expanded #headerExpandContent {
+      grid-template-rows: 1fr;
+    }
+    .expanded #headerExpandContent {
+      background-color: hsl(var(--glass-panel-strong)) !important;
+      border-color: hsl(var(--glass-edge)) !important;
+      border-radius: 14px;
+      padding: 0.7rem 1rem;
+      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
+      box-shadow:
+        inset 0 1px 0 hsl(var(--glass-rim)),
+        inset 0 0 0 1px hsl(var(--glass-inner)),
+        0 1px 2px hsl(var(--glass-contact)),
+        0 16px 38px -20px hsl(var(--glass-shade));
+    }
+
+    /* header component after */
+    header-component #headerExpandContent::after {
+      box-sizing: content-box;
+      content: '';
+      position: absolute;
+      inset-inline: calc(-1rem - 1px);
+      bottom: 0;
+      top: -5rem;
+      z-index: -1;
+      transition: 0.3s;
+      visibility: hidden;
+      opacity: 0;
+      border-bottom: 1px solid transparent;
+    }
+    header-component:not(.not-top) #headerExpandContent::after {
+      visibility: visible;
+      bottom: -1rem;
+      opacity: 1;
+      background-color: hsl(var(--glass-panel-strong));
+      border-bottom-color: hsl(var(--glass-edge));
+    }
+  }
+
+  /* dark light mode toggle */
+  #toggleDarkMode {
+    & .theme-icon {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      opacity: 0;
+      filter: blur(4px);
+      transform: scale(0.6);
+      transition:
+        opacity 0.25s ease,
+        filter 0.25s ease,
+        transform 0.25s ease;
+      pointer-events: none;
+    }
+    & .system {
+      opacity: 1;
+      filter: blur(0);
+      transform: scale(1);
+    }
+    &[data-theme='dark'] {
+      & .system {
+        opacity: 0;
+        filter: blur(4px);
+        transform: scale(0.6);
+      }
+      & .dark {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1);
+      }
+    }
+    &[data-theme='light'] {
+      & .system {
+        opacity: 0;
+        filter: blur(4px);
+        transform: scale(0.6);
+      }
+      & .light {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1);
+      }
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #toggleDarkMode .theme-icon {
+      transition: none;
+    }
+  }
+</style>

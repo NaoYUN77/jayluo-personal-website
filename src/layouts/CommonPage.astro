@@ -1,0 +1,46 @@
+---
+import type { MarkdownHeading } from 'astro'
+
+import PageLayout from '@/layouts/ContentLayout.astro'
+import PageInfo from '@/components/comment/PageInfo.astro'
+import TableOfContents from '@/components/navigation/TableOfContents.astro'
+
+interface Props {
+  title: string
+  headings?: MarkdownHeading[]
+  surface?: boolean
+  info?:
+    | string
+    | {
+        slug: string
+        hideComment?: boolean
+      }
+}
+
+const { title, headings, info, surface = true, ...props } = Astro.props
+---
+
+<PageLayout meta={{ title }} {surface} {...props}>
+  {headings?.length && <TableOfContents headings={headings} slot='sidebar' />}
+
+  <Fragment slot='header'>
+    <h1 class='text-2xl font-medium sm:mb-2 sm:text-3xl'>
+      {title}
+    </h1>
+    {
+      info && (
+        <PageInfo
+          path={typeof info === 'string' ? info : info.slug}
+          hideComment={typeof info === 'object' && info.hideComment ? info.hideComment : false}
+          class='italic'
+        />
+      )
+    }
+  </Fragment>
+
+  <slot />
+
+  <slot name='bottom' slot='bottom' />
+
+  <slot name='bottom-sidebar' slot='bottom-sidebar' />
+</PageLayout>

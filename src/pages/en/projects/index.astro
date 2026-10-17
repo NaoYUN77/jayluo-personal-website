@@ -1,0 +1,53 @@
+---
+import { getProjects, type ProjectStatus } from '@/data/projects'
+
+import PageLayout from '@/layouts/CommonPage.astro'
+import ProjectSection from '@/components/projects/ProjectSection.astro'
+
+export const prerender = true
+
+const groups: { status: ProjectStatus; title: string }[] = [
+  { status: 'active', title: 'Active' },
+  { status: 'paused', title: 'Paused' },
+  { status: 'archived', title: 'Archived' }
+]
+
+const projects = getProjects('en')
+const toCard = (project: (typeof projects)[number]) => ({
+  id: project.id,
+  name: project.name,
+  description: `${project.description}${project.stack.length ? ` · ${project.stack.join(' / ')}` : ''}`,
+  links: [
+    ...(project.repo ? [{ type: 'github', href: project.repo }] : []),
+    ...(project.demo ? [{ type: 'site', href: project.demo }] : [])
+  ]
+})
+
+const headings = groups.map((group) => ({
+  depth: 2 as const,
+  slug: group.status,
+  text: group.title
+}))
+---
+
+<PageLayout
+  title='Projects'
+  {headings}
+  info={{ slug: '/en/projects', hideComment: true }}
+  surface={false}
+>
+  <p>Things I have built, grouped by status: active, paused, and kept in the archive.</p>
+
+  {
+    groups.map((group) => {
+      const items = projects.filter((project) => project.status === group.status)
+      if (!items.length) return null
+      return (
+        <>
+          <h2 id={group.status}>{group.title}</h2>
+          <ProjectSection analyticsSection={group.status} project={items.map(toCard)} />
+        </>
+      )
+    })
+  }
+</PageLayout>

@@ -1,0 +1,43 @@
+---
+export const prerender = true
+import PageLayout from '@/layouts/CommonPage.astro'
+
+const headings = [
+  { depth: 2, slug: 'about-me', text: 'About me' },
+  { depth: 2, slug: 'about-site', text: 'About this site' },
+  { depth: 2, slug: 'now', text: 'Now' }
+]
+---
+
+<PageLayout title='About' {headings} info='/en/about'>
+  <h2 id='about-me'>About me</h2>
+  <p>
+    Write a short introduction here: who you are, what you work on, and what you care about. Two or
+    three hundred words reads better than a list of credentials.
+  </p>
+  <p>
+    Add a more personal paragraph too — what you are learning, what you enjoy, what you are reading.
+  </p>
+
+  <h2 id='about-site'>About this site</h2>
+  <p>
+    This site holds three things: <a href='/en/blog'>blog posts</a>,
+    <a href='/en/notes'>notes</a>, and <a href='/en/projects'>projects</a>. Posts are published in
+    chronological order, notes grow by topic and status, and projects are kept by lifecycle stage.
+  </p>
+  <p>
+    The site is built with Astro, with separate Chinese and English navigation. Use the language
+    button in the header to switch.
+  </p>
+
+  <h2 id='now'>Now</h2>
+  <p>
+    Following the <a href='https://nownownow.com/about' target='_blank' rel='noopener noreferrer'>/now</a>
+    convention: keep a short, regularly updated list of what you are focused on right now.
+  </p>
+  <ul>
+    <li>A book or project you are reading</li>
+    <li>A technology you are learning</li>
+    <li>A goal you are working toward</li>
+  </ul>
+</PageLayout>

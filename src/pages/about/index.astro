@@ -1,0 +1,40 @@
+---
+export const prerender = true
+import PageLayout from '@/layouts/CommonPage.astro'
+
+const headings = [
+  { depth: 2, slug: 'about-me', text: '关于我' },
+  { depth: 2, slug: 'about-site', text: '关于这个站' },
+  { depth: 2, slug: 'now', text: '最近在做什么' }
+]
+---
+
+<PageLayout title='关于' {headings} info='/about'>
+  <h2 id='about-me'>关于我</h2>
+  <p>
+    这里写你的自我介绍：你是谁、在做什么、关心什么问题。建议控制在两三百字以内，比罗列履历更好读。
+  </p>
+  <p>
+    可以补充一段更个人化的内容，比如你在学什么、喜欢什么、最近在读什么。
+  </p>
+
+  <h2 id='about-site'>关于这个站</h2>
+  <p>
+    这个站点用来放三样东西：<a href='/blog'>博客</a>、<a href='/notes'>笔记</a>和
+    <a href='/projects'>项目</a>。博客按时间发布，笔记按主题和状态持续更新，项目按状态归档。
+  </p>
+  <p>
+    站点使用 Astro 构建，中英文两套导航，可以在右上角切换语言。
+  </p>
+
+  <h2 id='now'>最近在做什么</h2>
+  <p>
+    参考 <a href='https://nownownow.com/about' target='_blank' rel='noopener noreferrer'>/now</a>
+    页面的做法：定期更新你当前关注的事情。例如：
+  </p>
+  <ul>
+    <li>正在读的一本书或一个项目</li>
+    <li>正在学的一项技术</li>
+    <li>正在推进的一个目标</li>
+  </ul>
+</PageLayout>

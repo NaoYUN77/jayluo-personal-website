@@ -1,0 +1,140 @@
+---
+import { getCollection } from 'astro:content'
+import { getProjects } from '@/data/projects'
+
+import PageLayout from '@/layouts/BaseLayout.astro'
+import PostPreviewEn from '@/components/blog/PostPreviewEn.astro'
+import HomeHero from '@/components/home/HomeHero.astro'
+import Section from '@/components/home/Section.astro'
+import ProjectSection from '@/components/projects/ProjectSection.astro'
+import config from '@/site-config'
+
+export const prerender = true
+
+const MAX_POSTS = 5
+const MAX_NOTES = 4
+
+const posts = (await getCollection('blogEn'))
+  .filter((post) => !post.data.draft && post.data.translationKey)
+  .sort(
+    (a, b) =>
+      +(b.data.updatedDate ?? b.data.publishDate) - +(a.data.updatedDate ?? a.data.publishDate)
+  )
+  .slice(0, MAX_POSTS)
+
+const notes = (await getCollection('notesEn'))
+  .filter((entry) => !entry.data.draft && entry.data.translationKey)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, MAX_NOTES)
+
+const noteStatusLabels: Record<string, string> = {
+  'in-progress': 'In progress',
+  incomplete: 'Needs more',
+  ready: 'Ready',
+  archived: 'Archived'
+}
+
+const featuredProjects = getProjects('en').filter((project) => project.featured)
+const projectCards = featuredProjects.map((project) => ({
+  id: project.id,
+  name: project.name,
+  description: project.description,
+  links: [
+    ...(project.repo ? [{ type: 'github', href: project.repo }] : []),
+    ...(project.demo ? [{ type: 'site', href: project.demo }] : [])
+  ]
+}))
+---
+
+<PageLayout meta={{ title: 'Home' }}>
+  <main class='home-page'>
+    <HomeHero
+      lang='en'
+      name={config.author}
+      description={config.description ?? ''}
+      postCount={posts.length}
+      noteCount={notes.length}
+      projectCount={projectCards.length}
+    />
+
+    <div id='content' class='home-sections animate'>
+      {
+        posts.length > 0 && (
+          <Section title='Blog' index='01' meta={`${posts.length} posts · Latest`} id='blog'>
+            <ul class='home-list glass-surface home-post-list'>
+              {posts.map((post) => (
+                <PostPreviewEn class='home-post-card home-list-row' post={post} />
+              ))}
+            </ul>
+            <a class='home-more' href='/en/blog'>All posts <span aria-hidden='true'>→</span></a>
+          </Section>
+        )
+      }
+
+      {
+        notes.length > 0 && (
+          <Section title='Notes' index='02' meta={`${notes.length} notes · Growing`} id='notes'>
+            <ul class='home-list glass-surface home-note-list'>
+              {notes.map((note) => (
+                <li class='home-list-row'>
+                  <a
+                    class='home-note-row group/card flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-4'
+                    href={`/en/notes/${note.data.translationKey}`}
+                    data-astro-prefetch
+                  >
+                    <time
+                      class='min-w-[95px] shrink-0 text-xs text-muted-foreground'
+                      datetime={note.data.date.toISOString()}
+                    >
+                      {note.data.date.toLocaleDateString('en', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </time>
+                    <span class='flex flex-col gap-1'>
+                      <span class='flex flex-wrap items-center gap-2'>
+                        <span class='font-medium'>{note.data.title}</span>
+                        <span class='rounded-md bg-background/55 px-2 py-0.5 text-xs text-muted-foreground group-hover/card:bg-background/75'>
+                          {noteStatusLabels[note.data.status] ?? note.data.status}
+                        </span>
+                      </span>
+                      {note.data.description && (
+                        <span class='text-sm text-muted-foreground'>{note.data.description}</span>
+                      )}
+                    </span>
+                    <span
+                      aria-hidden='true'
+                      class='ms-auto hidden text-muted-foreground transition-all duration-300 group-hover/card:translate-x-0.5 group-hover/card:text-primary sm:block'
+                    >
+                      →
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a class='home-more' href='/en/notes'>All notes <span aria-hidden='true'>→</span></a>
+          </Section>
+        )
+      }
+
+      {
+        projectCards.length > 0 && (
+          <Section
+            title='Projects'
+            index='03'
+            meta={`${projectCards.length} projects · By status`}
+            id='projects'
+          >
+            <ProjectSection
+              class='home-project-grid'
+              analyticsSection='home_featured'
+              project={projectCards}
+            />
+            <a class='home-more' href='/en/projects'>All projects <span aria-hidden='true'>→</span></a>
+          </Section>
+        )
+      }
+    </div>
+  </main>
+</PageLayout>
