@@ -1,0 +1,512 @@
+---
+import type { Lang } from '@/i18n/ui'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const label = lang === 'en' ? "Greet Jayluo's virtual avatar" : '和 Jayluo 的虚拟形象打招呼'
+---
+
+<button
+  class='virtual-mascot glass-surface'
+  type='button'
+  aria-label={label}
+  title={label}
+  data-virtual-mascot
+>
+  <span class='virtual-mascot-meta' aria-hidden='true'>
+    <span>JAY / 01</span>
+    <span class='virtual-mascot-live'><i></i>READY</span>
+  </span>
+
+  <svg class='virtual-mascot-art' viewBox='0 0 420 240' aria-hidden='true'>
+    <defs>
+      <linearGradient id='mascot-frame' x1='0' y1='0' x2='1' y2='1'>
+        <stop offset='0' stop-color='hsl(42 34% 98%)'></stop>
+        <stop offset='1' stop-color='hsl(146 20% 92%)'></stop>
+      </linearGradient>
+      <linearGradient id='mascot-jacket' x1='0' y1='0' x2='0.8' y2='1'>
+        <stop offset='0' stop-color='hsl(154 24% 31%)'></stop>
+        <stop offset='1' stop-color='hsl(157 24% 22%)'></stop>
+      </linearGradient>
+      <filter id='mascot-shadow' x='-30%' y='-30%' width='160%' height='180%'>
+        <feDropShadow dx='0' dy='9' stdDeviation='9' flood-opacity='0.16'></feDropShadow>
+      </filter>
+    </defs>
+
+    <rect x='1' y='1' width='418' height='238' rx='24' fill='url(#mascot-frame)'></rect>
+    <path
+      d='M24 73H396M24 118H396M24 163H396M24 208H396M92 24V216M180 24V216M268 24V216M356 24V216'
+      fill='none'
+      stroke='hsl(154 18% 27% / 0.075)'
+      stroke-width='1'></path>
+    <path
+      d='M32 194C87 119 140 191 197 128C252 67 311 115 389 42'
+      fill='none'
+      stroke='hsl(154 28% 33% / 0.13)'
+      stroke-width='1.5'
+      stroke-dasharray='5 7'></path>
+
+    <g class='mascot-orbit'>
+      <circle cx='337' cy='73' r='28' fill='none' stroke='hsl(154 24% 30% / 0.18)'></circle>
+      <circle cx='337' cy='73' r='4' fill='hsl(154 30% 38%)'></circle>
+      <path
+        d='M337 41V35M337 111V105M305 73H299M375 73H369'
+        stroke='hsl(154 24% 30% / 0.28)'
+        stroke-linecap='round'></path>
+    </g>
+
+    <g class='mascot-body' filter='url(#mascot-shadow)'>
+      <ellipse class='mascot-shadow' cx='232' cy='222' rx='78' ry='9' fill='hsl(150 20% 18% / 0.13)'
+      ></ellipse>
+
+      <path
+        d='M182 159C185 148 195 142 208 142H257C271 142 282 149 285 162L299 224H164L182 159Z'
+        fill='url(#mascot-jacket)'></path>
+      <path d='M208 142L232 167L257 142L265 224H199L208 142Z' fill='hsl(42 34% 96%)'></path>
+      <path d='M216 142L232 160L248 142' fill='none' stroke='hsl(154 24% 23%)' stroke-width='4'
+      ></path>
+      <path
+        d='M186 158C175 163 171 178 174 191L183 218'
+        fill='none'
+        stroke='hsl(154 24% 27%)'
+        stroke-width='17'
+        stroke-linecap='round'></path>
+      <path
+        d='M207 142C198 135 194 126 195 117'
+        fill='none'
+        stroke='hsl(29 43% 72%)'
+        stroke-width='12'
+        stroke-linecap='round'></path>
+      <path
+        d='M256 142C265 135 269 126 268 117'
+        fill='none'
+        stroke='hsl(29 43% 72%)'
+        stroke-width='12'
+        stroke-linecap='round'></path>
+
+      <g class='mascot-wave-arm'>
+        <path
+          d='M278 162C291 158 303 147 310 132'
+          fill='none'
+          stroke='hsl(154 24% 27%)'
+          stroke-width='17'
+          stroke-linecap='round'></path>
+        <path
+          d='M308 135C311 126 317 117 323 113'
+          fill='none'
+          stroke='hsl(29 43% 72%)'
+          stroke-width='12'
+          stroke-linecap='round'></path>
+        <g class='mascot-hand'>
+          <circle cx='325' cy='108' r='10' fill='hsl(29 43% 74%)'></circle>
+          <path
+            d='M319 101L318 91M324 99L326 88M330 100L334 91'
+            fill='none'
+            stroke='hsl(29 43% 74%)'
+            stroke-width='5'
+            stroke-linecap='round'></path>
+        </g>
+      </g>
+
+      <g class='mascot-tablet'>
+        <rect
+          x='158'
+          y='177'
+          width='54'
+          height='40'
+          rx='8'
+          transform='rotate(-9 158 177)'
+          fill='hsl(42 34% 98%)'
+          stroke='hsl(154 22% 28% / 0.45)'
+          stroke-width='2'></rect>
+        <path
+          d='M169 190H199M169 197H195M169 204H187'
+          transform='rotate(-9 158 177)'
+          stroke='hsl(154 28% 34% / 0.55)'
+          stroke-width='2'
+          stroke-linecap='round'></path>
+      </g>
+
+      <g class='mascot-head'>
+        <path
+          d='M205 108C203 119 208 130 219 132M259 108C261 119 256 130 245 132'
+          fill='none'
+          stroke='hsl(29 43% 72%)'
+          stroke-width='3'
+          stroke-linecap='round'
+          opacity='0.55'></path>
+        <path
+          d='M195 93C195 68 211 53 233 53C257 53 273 70 271 98L268 113C261 134 247 143 232 143C216 143 202 134 197 114L195 93Z'
+          fill='hsl(29 47% 76%)'></path>
+        <path
+          d='M192 96C190 71 207 48 235 48C264 48 280 71 274 101C268 84 258 75 245 69C236 83 216 86 201 81C197 87 194 94 192 96Z'
+          fill='hsl(160 8% 15%)'></path>
+        <path
+          d='M200 79C207 68 218 62 231 61C246 60 258 66 265 78C254 72 244 71 234 72C221 73 209 76 200 79Z'
+          fill='hsl(160 8% 18%)'></path>
+        <path
+          d='M196 69C205 52 229 43 249 50C258 53 264 59 268 65'
+          fill='none'
+          stroke='hsl(160 8% 19%)'
+          stroke-width='13'
+          stroke-linecap='round'></path>
+
+        <g class='mascot-face'>
+          <g class='mascot-eyes'>
+            <circle cx='215' cy='105' r='3.1' fill='hsl(160 9% 13%)'></circle>
+            <circle cx='250' cy='105' r='3.1' fill='hsl(160 9% 13%)'></circle>
+          </g>
+          <g fill='none' stroke='hsl(160 9% 18%)' stroke-width='2.4'>
+            <circle cx='215' cy='104' r='10.5'></circle>
+            <circle cx='250' cy='104' r='10.5'></circle>
+            <path d='M225.5 104H239.5'></path>
+            <path d='M204.5 101L205 101M260.5 101L260 101' stroke-linecap='round'></path>
+          </g>
+          <path
+            d='M228 115C231 118 235 118 238 115'
+            fill='none'
+            stroke='hsl(9 40% 42% / 0.72)'
+            stroke-width='2.2'
+            stroke-linecap='round'></path>
+          <path
+            d='M208 88C212 86 216 86 219 87M244 87C248 86 252 87 255 89'
+            fill='none'
+            stroke='hsl(160 8% 20% / 0.72)'
+            stroke-width='2.2'
+            stroke-linecap='round'></path>
+        </g>
+
+        <g class='mascot-headset'>
+          <path
+            d='M273 95C278 95 281 99 280 104L279 113C278 118 275 121 271 120'
+            fill='none'
+            stroke='hsl(154 29% 32%)'
+            stroke-width='3.5'
+            stroke-linecap='round'></path>
+          <path
+            d='M277 104C286 105 289 112 284 117C281 120 277 119 276 116'
+            fill='none'
+            stroke='hsl(154 29% 32%)'
+            stroke-width='2.5'
+            stroke-linecap='round'></path>
+          <circle cx='285' cy='113' r='2.5' fill='hsl(154 35% 43%)'></circle>
+        </g>
+      </g>
+
+      <g class='mascot-badge'>
+        <rect x='211' y='181' width='42' height='20' rx='6' fill='hsl(42 34% 96% / 0.12)'></rect>
+        <path
+          d='M222 191L218 194L222 197M242 191L246 194L242 197M234 188L229 200'
+          fill='none'
+          stroke='hsl(42 30% 94% / 0.82)'
+          stroke-width='1.8'
+          stroke-linecap='round'
+          stroke-linejoin='round'></path>
+      </g>
+    </g>
+
+    <g class='mascot-message'>
+      <path
+        d='M65 47H131C138 47 143 52 143 59V82C143 89 138 94 131 94H94L82 105L84 94H65C58 94 53 89 53 82V59C53 52 58 47 65 47Z'
+        fill='hsl(42 34% 98% / 0.94)'
+        stroke='hsl(154 24% 31% / 0.2)'></path>
+      <circle cx='72' cy='71' r='3' fill='hsl(154 34% 38%)'></circle>
+      <path
+        d='M84 66H123M84 76H113'
+        stroke='hsl(154 24% 31% / 0.42)'
+        stroke-width='2.5'
+        stroke-linecap='round'></path>
+    </g>
+
+    <g class='mascot-spark mascot-spark-a'>
+      <path d='M317 156V170M310 163H324' stroke='hsl(154 30% 38% / 0.55)' stroke-linecap='round'
+      ></path>
+    </g>
+    <g class='mascot-spark mascot-spark-b'>
+      <path
+        d='M145 133V144M139.5 138.5H150.5'
+        stroke='hsl(28 45% 56% / 0.55)'
+        stroke-linecap='round'></path>
+    </g>
+  </svg>
+
+  <span class='virtual-mascot-hint' aria-hidden='true'>tap to greet</span>
+</button>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-virtual-mascot]').forEach((mascot) => {
+    mascot.addEventListener('click', () => {
+      mascot.classList.remove('is-greeting')
+      void mascot.offsetWidth
+      mascot.classList.add('is-greeting')
+      window.setTimeout(() => mascot.classList.remove('is-greeting'), 1400)
+    })
+  })
+</script>
+
+<style>
+  .virtual-mascot {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid hsl(var(--border) / 0.9);
+    border-radius: 18px;
+    padding: 0.65rem;
+    color: hsl(var(--foreground));
+    text-align: left;
+    cursor: pointer;
+    isolation: isolate;
+    transition:
+      transform 0.35s var(--glass-ease),
+      border-color 0.25s ease,
+      background-color 0.25s ease;
+  }
+
+  .virtual-mascot::before {
+    position: absolute;
+    z-index: -1;
+    inset: -36% -22% auto 38%;
+    width: 72%;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: hsl(var(--primary) / 0.08);
+    content: '';
+    filter: blur(8px);
+  }
+
+  .virtual-mascot:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary) / 0.34);
+    background: hsl(var(--card) / 0.72);
+  }
+
+  .virtual-mascot:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 3px;
+  }
+
+  .virtual-mascot-meta {
+    position: absolute;
+    z-index: 2;
+    top: 0.8rem;
+    right: 0.85rem;
+    left: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: hsl(var(--muted-foreground));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    pointer-events: none;
+  }
+
+  .virtual-mascot-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    letter-spacing: 0.05em;
+  }
+
+  .virtual-mascot-live i {
+    width: 0.34rem;
+    height: 0.34rem;
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+    animation: mascot-pulse 2.4s ease-in-out infinite;
+  }
+
+  .virtual-mascot-art {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .virtual-mascot-hint {
+    position: absolute;
+    right: 0.9rem;
+    bottom: 0.72rem;
+    color: hsl(var(--muted-foreground));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.54rem;
+    letter-spacing: 0.08em;
+    opacity: 0;
+    transform: translateY(3px);
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .virtual-mascot:hover .virtual-mascot-hint,
+  .virtual-mascot:focus-visible .virtual-mascot-hint {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .mascot-body {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: mascot-breathe 4.8s ease-in-out infinite;
+  }
+
+  .mascot-head {
+    transform-box: fill-box;
+    transform-origin: 50% 90%;
+    animation: mascot-head 6.4s ease-in-out infinite;
+  }
+
+  .mascot-eyes {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: mascot-blink 7s infinite;
+  }
+
+  .mascot-wave-arm {
+    transform-box: fill-box;
+    transform-origin: 8% 86%;
+    animation: mascot-wave 0.8s 0.9s 2 ease-in-out;
+  }
+
+  .is-greeting .mascot-wave-arm {
+    animation: mascot-wave 0.55s 2 ease-in-out;
+  }
+
+  .is-greeting .mascot-head {
+    animation: mascot-greet-head 1.3s ease-in-out;
+  }
+
+  .mascot-orbit {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: mascot-orbit 16s linear infinite;
+  }
+
+  .mascot-message,
+  .mascot-spark {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .mascot-message {
+    animation: mascot-float 5.2s ease-in-out infinite;
+  }
+
+  .mascot-spark-a {
+    animation: mascot-float 4.4s 0.6s ease-in-out infinite;
+  }
+
+  .mascot-spark-b {
+    animation: mascot-float 5.6s 1.2s ease-in-out infinite reverse;
+  }
+
+  @keyframes mascot-breathe {
+    0%,
+    100% {
+      transform: translateY(0) scaleY(1);
+    }
+    50% {
+      transform: translateY(-1.5px) scaleY(1.008);
+    }
+  }
+
+  @keyframes mascot-head {
+    0%,
+    100% {
+      transform: rotate(-0.8deg);
+    }
+    50% {
+      transform: rotate(1deg) translateY(-1px);
+    }
+  }
+
+  @keyframes mascot-blink {
+    0%,
+    45%,
+    48%,
+    100% {
+      transform: scaleY(1);
+    }
+    46%,
+    47% {
+      transform: scaleY(0.08);
+    }
+  }
+
+  @keyframes mascot-wave {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-13deg);
+    }
+    60% {
+      transform: rotate(9deg);
+    }
+    82% {
+      transform: rotate(-7deg);
+    }
+  }
+
+  @keyframes mascot-greet-head {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    30% {
+      transform: rotate(-3deg) translateY(-1px);
+    }
+    70% {
+      transform: rotate(2deg);
+    }
+  }
+
+  @keyframes mascot-orbit {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes mascot-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  @keyframes mascot-pulse {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scale(0.85);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .virtual-mascot,
+    .mascot-body,
+    .mascot-head,
+    .mascot-eyes,
+    .mascot-wave-arm,
+    .mascot-orbit,
+    .mascot-message,
+    .mascot-spark,
+    .virtual-mascot-live i {
+      animation: none;
+      transition: none;
+    }
+  }
+</style>

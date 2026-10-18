@@ -169,12 +169,13 @@ const homeHref = localizedPath('/', lang)
 
         this.classList.toggle('not-top', currentScrollY > 8)
 
-        if (currentScrollY <= 8) {
+        // Hiding must happen at the first downward movement. A larger delta
+        // leaves the sticky header over the content during slow trackpad scrolls.
+        if (currentScrollY <= 8 || delta < 0) {
           this.setHeaderVisible(true)
-        } else if (delta > 2) {
+        } else if (delta > 0) {
           this.setHeaderVisible(false)
-        } else if (delta < -2) {
-          this.setHeaderVisible(true)
+          this.setMenuExpanded(false)
         }
 
         this.lastScrollY = currentScrollY
@@ -237,6 +238,7 @@ const homeHref = localizedPath('/', lang)
       opacity: 0;
       pointer-events: none;
       transform: translateY(calc(-100% - 1.5rem));
+      visibility: hidden;
     }
   }
   header-component.glass-surface {

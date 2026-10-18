@@ -1,6 +1,8 @@
 ---
-import { Icon } from 'astro-pure/user'
 import type { Lang } from '@/i18n/ui'
+
+import { Icon } from 'astro-pure/user'
+import VirtualMascot from '@/components/home/VirtualMascot.astro'
 
 interface Props {
   lang: Lang
@@ -59,6 +61,10 @@ const pad = (count: number) => String(count).padStart(2, '0')
     <div class='home-hero-copy'>
       <h1 id='home-title'>{name}<span aria-hidden='true'>/</span></h1>
       <p>{description}</p>
+    </div>
+
+    <div class='home-mascot'>
+      <VirtualMascot lang={lang} />
     </div>
   </div>
 
@@ -134,7 +140,7 @@ const pad = (count: number) => String(count).padStart(2, '0')
 
   .home-hero-main {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) minmax(16rem, 22rem);
     gap: clamp(1.2rem, 3vw, 2rem);
     align-items: center;
     padding: clamp(2.4rem, 6vw, 4.5rem) 0;
@@ -174,6 +180,12 @@ const pad = (count: number) => String(count).padStart(2, '0')
 
   .home-hero-copy {
     min-width: 0;
+  }
+
+  .home-mascot {
+    width: 100%;
+    min-width: 0;
+    justify-self: end;
   }
 
   .home-hero-copy h1 {
@@ -280,6 +292,18 @@ const pad = (count: number) => String(count).padStart(2, '0')
     font-weight: 500;
   }
 
+  @media (max-width: 1060px) {
+    .home-hero-main {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .home-mascot {
+      grid-column: 1 / -1;
+      max-width: 30rem;
+      justify-self: start;
+    }
+  }
+
   @media (max-width: 760px) {
     .home-hero-main {
       grid-template-columns: 1fr;
@@ -289,6 +313,11 @@ const pad = (count: number) => String(count).padStart(2, '0')
 
     .home-avatar {
       width: 5rem;
+    }
+
+    .home-mascot {
+      grid-column: auto;
+      max-width: none;
     }
 
     .home-hero-bottom {

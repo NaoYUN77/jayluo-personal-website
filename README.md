@@ -129,3 +129,8 @@ npm run dev
 
 Cloudflare 部署尚未执行。`wrangler.jsonc` 已声明 Pages 输出目录和 `MEDIA` R2
 binding；部署前还需要创建 R2 bucket、配置 GitHub token 和 `CONTENT_API_TOKEN`。
+
+## License
+
+除另有说明外，本项目的源代码采用 [Apache License 2.0](LICENSE) 授权。第三方归属信息见
+[NOTICE](NOTICE)，第三方依赖仍适用各自的许可证。
