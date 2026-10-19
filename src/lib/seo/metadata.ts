@@ -24,12 +24,7 @@ const sections: Record<string, [string, string, string, string]> = {
     'Projects',
     'Browse active, paused, and archived projects, with stacks and code links.'
   ],
-  '/tags': [
-    '博客标签',
-    '按主题浏览博客文章。',
-    'Blog tags',
-    'Browse blog posts by topic.'
-  ],
+  '/tags': ['博客标签', '按主题浏览博客文章。', 'Blog tags', 'Browse blog posts by topic.'],
   '/notes/tags': [
     '笔记标签',
     '按标签查找学习笔记、代码片段与研究记录。',

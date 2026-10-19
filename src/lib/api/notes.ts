@@ -1,4 +1,3 @@
-import type { RuntimeEnv } from './runtime'
 import {
   assertBody,
   compactObject,
@@ -18,6 +17,7 @@ import {
 } from './frontmatter'
 import { deleteRepoFile, getRepoFile, listRepoPaths, putRepoFile } from './github'
 import { ApiError, parseLocale } from './http'
+import type { RuntimeEnv } from './runtime'
 
 const NOTES_ROOT = 'src/content/notes'
 const EXTENSIONS = ['md', 'mdx'] as const
@@ -74,12 +74,7 @@ export async function listNotes(
   return records.slice(offset, offset + (options.limit ?? 20))
 }
 
-export async function getNote(
-  env: RuntimeEnv,
-  id: string,
-  locale: Locale,
-  includeBody = true
-) {
+export async function getNote(env: RuntimeEnv, id: string, locale: Locale, includeBody = true) {
   const file = await findNoteFile(env, id, locale)
   if (!file) return null
   return toNoteRecord(file.path, file.sha, file.content, locale, includeBody)
@@ -98,12 +93,7 @@ export async function createNote(env: RuntimeEnv, input: NoteInput) {
   const body = assertBody(input.body ?? '')
   const path = notePath(id, locale, extension)
   const content = serializeMarkdownDocument({ data, body })
-  const result = await putRepoFile(
-    env,
-    path,
-    content,
-    `content(note): create ${id} (${locale})`
-  )
+  const result = await putRepoFile(env, path, content, `content(note): create ${id} (${locale})`)
 
   return {
     record: toNoteRecord(path, result.sha, content, locale, true),
@@ -250,7 +240,8 @@ function toNoteRecord(
 ) {
   const document = parseMarkdownDocument(source, path)
   const id =
-    noteIdFromPath(path, locale) ?? path.slice(NOTES_ROOT.length + 1).replace(/\.(?:en\.)?(?:md|mdx)$/, '')
+    noteIdFromPath(path, locale) ??
+    path.slice(NOTES_ROOT.length + 1).replace(/\.(?:en\.)?(?:md|mdx)$/, '')
   const translationKey =
     typeof document.data.translationKey === 'string' ? document.data.translationKey : id
 

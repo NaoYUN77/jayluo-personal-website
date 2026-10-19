@@ -1,4 +1,3 @@
-import type { RuntimeEnv } from './runtime'
 import {
   asRecord,
   assertBody,
@@ -18,6 +17,7 @@ import {
 } from './frontmatter'
 import { deleteRepoFile, getRepoFile, listRepoPaths, putRepoFile } from './github'
 import { ApiError, parseLocale } from './http'
+import type { RuntimeEnv } from './runtime'
 
 const BLOG_ROOT = 'src/content/blog'
 const EXTENSIONS = ['mdx', 'md'] as const
@@ -87,12 +87,7 @@ export async function listPosts(
   return records.slice(offset, offset + (options.limit ?? 20))
 }
 
-export async function getPost(
-  env: RuntimeEnv,
-  id: string,
-  locale: Locale,
-  includeBody = true
-) {
+export async function getPost(env: RuntimeEnv, id: string, locale: Locale, includeBody = true) {
   const file = await findPostFile(env, id, locale)
   if (!file) return null
   return toPostRecord(file.path, file.sha, file.content, locale, includeBody)
@@ -277,9 +272,7 @@ function toPostRecord(
   const document = parseMarkdownDocument(source, path)
   const id = postIdFromPath(path, locale) ?? path.split('/')[3]
   const translationKey =
-    typeof document.data.translationKey === 'string'
-      ? document.data.translationKey
-      : `${id}/post`
+    typeof document.data.translationKey === 'string' ? document.data.translationKey : `${id}/post`
 
   return {
     type: 'post' as const,

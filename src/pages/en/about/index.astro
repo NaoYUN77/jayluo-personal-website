@@ -1,6 +1,7 @@
 ---
-export const prerender = true
 import PageLayout from '@/layouts/CommonPage.astro'
+
+export const prerender = true
 
 const headings = [
   { depth: 2, slug: 'about-me', text: 'About me' },
@@ -32,7 +33,9 @@ const headings = [
 
   <h2 id='now'>Now</h2>
   <p>
-    Following the <a href='https://nownownow.com/about' target='_blank' rel='noopener noreferrer'>/now</a>
+    Following the <a href='https://nownownow.com/about' target='_blank' rel='noopener noreferrer'
+      >/now</a
+    >
     convention: keep a short, regularly updated list of what you are focused on right now.
   </p>
   <ul>

@@ -100,12 +100,7 @@ export function parseLocale(value: unknown, fallback: 'zh' | 'en' = 'zh') {
   throw new ApiError(400, 'INVALID_LOCALE', 'locale must be "zh" or "en".')
 }
 
-export function parseInteger(
-  value: string | null,
-  fallback: number,
-  min: number,
-  max: number
-) {
+export function parseInteger(value: string | null, fallback: number, min: number, max: number) {
   if (value === null || value === '') return fallback
   const parsed = Number(value)
   if (!Number.isFinite(parsed)) return fallback
@@ -123,7 +118,11 @@ export function parseDraftMode(value: string | null): 'all' | 'published' | 'onl
   if (value === null || value === '' || value === 'all') return 'all'
   if (value === 'true' || value === 'only') return 'only'
   if (value === 'false' || value === 'published') return 'published'
-  throw new ApiError(400, 'INVALID_DRAFT_FILTER', 'draft must be all, true, false, only, or published.')
+  throw new ApiError(
+    400,
+    'INVALID_DRAFT_FILTER',
+    'draft must be all, true, false, only, or published.'
+  )
 }
 
 export function triggerDeploy(locals: App.Locals) {

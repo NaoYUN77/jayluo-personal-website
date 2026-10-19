@@ -1,7 +1,7 @@
-import { Resvg } from '@resvg/resvg-js'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
+import { Resvg } from '@resvg/resvg-js'
 import satori from 'satori'
 
 const fallbackAvatarBuffer = fs.readFileSync(path.resolve('./src/assets/avatar.png'))
@@ -37,9 +37,7 @@ async function loadAvatar() {
   avatarLoadPromise = (async () => {
     const remote =
       process.env.AVATAR_URL ||
-      (process.env.SITE_URL
-        ? new URL('/api/v1/avatar', process.env.SITE_URL).href
-        : '')
+      (process.env.SITE_URL ? new URL('/api/v1/avatar', process.env.SITE_URL).href : '')
     if (!remote) return
 
     try {
@@ -107,15 +105,20 @@ async function loadGoogleFont(family: string, text: string, weight: number) {
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15'
     }
   }).then((r) => r.text())
-  const fontUrl = css.match(/src:\s*url\(([^)]+)\)\s*format\(['"]woff2['"]\)/)?.[1]
-    ?? css.match(/src:\s*url\(([^)]+)\)/)?.[1]
+  const fontUrl =
+    css.match(/src:\s*url\(([^)]+)\)\s*format\(['"]woff2['"]\)/)?.[1] ??
+    css.match(/src:\s*url\(([^)]+)\)/)?.[1]
   if (!fontUrl) throw new Error(`Google font CSS parse failed for ${family}`)
   return await fetch(fontUrl).then((r) => r.arrayBuffer())
 }
 
 type OgNode = {
   type: string
-  props: { style?: Record<string, unknown>; children?: OgNode | OgNode[] | string; [k: string]: unknown }
+  props: {
+    style?: Record<string, unknown>
+    children?: OgNode | OgNode[] | string
+    [k: string]: unknown
+  }
 }
 
 async function renderPng(tree: OgNode, textForSubset: string, opts: { mono?: boolean } = {}) {
@@ -148,30 +151,27 @@ function text(style: Record<string, unknown>, children: string): OgNode {
 }
 
 function header(): OgNode {
-  return div(
-    { alignItems: 'center', gap: 20 },
-    [
+  return div({ alignItems: 'center', gap: 20 }, [
+    {
+      type: 'img',
+      props: {
+        src: avatarDataUrl,
+        width: 72,
+        height: 72,
+        style: { borderRadius: 999, border: `2px solid ${PRIMARY}` }
+      }
+    },
+    text(
       {
-        type: 'img',
-        props: {
-          src: avatarDataUrl,
-          width: 72,
-          height: 72,
-          style: { borderRadius: 999, border: `2px solid ${PRIMARY}` }
-        }
+        fontSize: 32,
+        color: '#e5e7eb',
+        fontFamily: 'Noto Sans SC',
+        fontWeight: 500,
+        letterSpacing: '-0.01em'
       },
-      text(
-        {
-          fontSize: 32,
-          color: '#e5e7eb',
-          fontFamily: "Noto Sans SC",
-          fontWeight: 500,
-          letterSpacing: '-0.01em'
-        },
-        SITE
-      )
-    ]
-  )
+      SITE
+    )
+  ])
 }
 
 function footerLine(left: string, right?: string): OgNode {
@@ -181,7 +181,7 @@ function footerLine(left: string, right?: string): OgNode {
       alignItems: 'center',
       fontSize: 26,
       color: '#94a3b8',
-      fontFamily: "Noto Sans SC",
+      fontFamily: 'Noto Sans SC',
       fontWeight: 500
     },
     [text({}, left), ...(right ? [text({ color: PRIMARY }, right)] : [])]
@@ -196,8 +196,7 @@ function shell(inner: OgNode[]): OgNode {
       padding: 72,
       flexDirection: 'column',
       justifyContent: 'space-between',
-      background:
-        'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0b1220 100%)',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0b1220 100%)',
       color: '#f8fafc',
       position: 'relative'
     },
@@ -221,39 +220,33 @@ function shell(inner: OgNode[]): OgNode {
   )
 }
 
-export async function defaultOgPng(opts: {
-  name: string
-  tagline: string
-}) {
+export async function defaultOgPng(opts: { name: string; tagline: string }) {
   await loadAvatar()
   const tree = shell([
     header(),
-    div(
-      { flexDirection: 'column', gap: 24 },
-      [
-        text(
-          {
-            fontSize: 96,
-            fontFamily: 'Noto Sans SC',
-            fontWeight: 700,
-            color: '#f8fafc',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05
-          },
-          opts.name
-        ),
-        text(
-          {
-            fontSize: 40,
-            fontFamily: 'Noto Sans SC',
-            fontWeight: 500,
-            color: '#cbd5e1',
-            letterSpacing: '-0.01em'
-          },
-          opts.tagline
-        )
-      ]
-    ),
+    div({ flexDirection: 'column', gap: 24 }, [
+      text(
+        {
+          fontSize: 96,
+          fontFamily: 'Noto Sans SC',
+          fontWeight: 700,
+          color: '#f8fafc',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.05
+        },
+        opts.name
+      ),
+      text(
+        {
+          fontSize: 40,
+          fontFamily: 'Noto Sans SC',
+          fontWeight: 500,
+          color: '#cbd5e1',
+          letterSpacing: '-0.01em'
+        },
+        opts.tagline
+      )
+    ]),
     footerLine('Blog · Notes · Projects')
   ])
   return cachedPng({ kind: 'default', ...opts }, () =>
@@ -274,45 +267,42 @@ export async function postOgPng(opts: {
 
   const tree = shell([
     header(),
-    div(
-      { flexDirection: 'column', gap: 22, flexGrow: 1, justifyContent: 'center' },
-      [
-        text(
-          {
-            fontSize: opts.title.length > 24 ? 62 : 78,
-            fontFamily: "Noto Sans SC",
-            fontWeight: 700,
-            color: '#f8fafc',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.15,
-            maxWidth: 1060
-          },
-          opts.title
-        ),
-        ...(truncDesc
-          ? [
-              text(
-                {
-                  fontSize: 28,
-                  fontFamily: "Noto Sans SC",
-                  fontWeight: 500,
-                  color: '#94a3b8',
-                  lineHeight: 1.4,
-                  maxWidth: 1060
-                },
-                truncDesc
-              )
-            ]
-          : [])
-      ]
-    ),
+    div({ flexDirection: 'column', gap: 22, flexGrow: 1, justifyContent: 'center' }, [
+      text(
+        {
+          fontSize: opts.title.length > 24 ? 62 : 78,
+          fontFamily: 'Noto Sans SC',
+          fontWeight: 700,
+          color: '#f8fafc',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.15,
+          maxWidth: 1060
+        },
+        opts.title
+      ),
+      ...(truncDesc
+        ? [
+            text(
+              {
+                fontSize: 28,
+                fontFamily: 'Noto Sans SC',
+                fontWeight: 500,
+                color: '#94a3b8',
+                lineHeight: 1.4,
+                maxWidth: 1060
+              },
+              truncDesc
+            )
+          ]
+        : [])
+    ]),
     div(
       {
         justifyContent: 'space-between',
         alignItems: 'center',
         fontSize: 24,
         color: '#94a3b8',
-        fontFamily: "Noto Sans SC",
+        fontFamily: 'Noto Sans SC',
         fontWeight: 500
       },
       [
@@ -372,7 +362,12 @@ function termLine(children: OgNode[], cursor = false): OgNode {
   return div({ alignItems: 'center', whiteSpace: 'pre' }, [
     ...children,
     ...(cursor
-      ? [{ type: 'div', props: { style: { width: 13, height: 26, marginLeft: 6, background: TERM.cyan } } }]
+      ? [
+          {
+            type: 'div',
+            props: { style: { width: 13, height: 26, marginLeft: 6, background: TERM.cyan } }
+          }
+        ]
       : [])
   ])
 }
@@ -386,7 +381,8 @@ function terminalShell(eyebrow: string, title: string, subtitle: string, lines: 
       flexDirection: 'column',
       justifyContent: 'space-between',
       backgroundColor: TERM.bg,
-      backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(180,235,253,0.13) 0%, rgba(11,11,16,0) 55%)',
+      backgroundImage:
+        'radial-gradient(circle at 88% 0%, rgba(180,235,253,0.13) 0%, rgba(11,11,16,0) 55%)',
       color: TERM.text,
       fontFamily: 'Noto Sans SC'
     },
@@ -406,7 +402,10 @@ function terminalShell(eyebrow: string, title: string, subtitle: string, lines: 
           },
           title
         ),
-        text({ fontSize: 28, fontWeight: 500, color: TERM.dim, lineHeight: 1.45, maxWidth: 1072 }, subtitle)
+        text(
+          { fontSize: 28, fontWeight: 500, color: TERM.dim, lineHeight: 1.45, maxWidth: 1072 },
+          subtitle
+        )
       ]),
       div(
         {
@@ -424,13 +423,14 @@ function terminalShell(eyebrow: string, title: string, subtitle: string, lines: 
               borderBottom: `1px solid ${TERM.border}`
             },
             [
-              ...[TERM.faint, TERM.teal, TERM.cyan].map(
-                (c): OgNode => ({
-                  type: 'div',
-                  props: { style: { width: 12, height: 12, borderRadius: 999, background: c } }
-                })
-              ),
-              text({ marginLeft: 8, fontFamily: MONO, fontSize: 17, color: TERM.faint }, 'joye@2026: ~/talks')
+              ...[TERM.faint, TERM.teal, TERM.cyan].map((c): OgNode => ({
+                type: 'div',
+                props: { style: { width: 12, height: 12, borderRadius: 999, background: c } }
+              })),
+              text(
+                { marginLeft: 8, fontFamily: MONO, fontSize: 17, color: TERM.faint },
+                'joye@2026: ~/talks'
+              )
             ]
           ),
           div(
@@ -452,7 +452,11 @@ function terminalShell(eyebrow: string, title: string, subtitle: string, lines: 
 }
 
 function prompt(cmd: string): OgNode {
-  return termLine([span(TERM.cyan, 'joye@2026'), span(TERM.faint, ' ~/talks'), span(TERM.text, ` $ ${cmd}`)])
+  return termLine([
+    span(TERM.cyan, 'joye@2026'),
+    span(TERM.faint, ' ~/talks'),
+    span(TERM.text, ` $ ${cmd}`)
+  ])
 }
 
 export async function talkOgPng(opts: {
@@ -491,9 +495,13 @@ export async function talkOgPng(opts: {
   const tree = terminalShell(eyebrow, opts.title, subtitle, lines)
 
   return cachedPng({ kind: 'talk', ...opts }, () =>
-    renderPng(tree, [eyebrow, opts.title, subtitle, meta, topics, 'joye@2026 ~/talks $ ./' + version].join(''), {
-      mono: true
-    })
+    renderPng(
+      tree,
+      [eyebrow, opts.title, subtitle, meta, topics, 'joye@2026 ~/talks $ ./' + version].join(''),
+      {
+        mono: true
+      }
+    )
   )
 }
 
@@ -521,7 +529,13 @@ export async function talksOgPng(opts: {
   return cachedPng({ kind: 'talks', ...opts }, () =>
     renderPng(
       tree,
-      [eyebrow, title, subtitle, 'joye@2026 ~/talks $ ls upcoming', ...shown.map((e) => e.date + e.title)].join(''),
+      [
+        eyebrow,
+        title,
+        subtitle,
+        'joye@2026 ~/talks $ ls upcoming',
+        ...shown.map((e) => e.date + e.title)
+      ].join(''),
       { mono: true }
     )
   )

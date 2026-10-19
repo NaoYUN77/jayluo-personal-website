@@ -75,7 +75,11 @@ export async function getRepoFile(env: RuntimeEnv, path: string): Promise<GitHub
 
   const data = (await response.json()) as GitHubContentResponse
   if (data.type !== 'file' || !data.sha || !data.content) {
-    throw new ApiError(502, 'GITHUB_INVALID_RESPONSE', `GitHub did not return file contents for ${path}.`)
+    throw new ApiError(
+      502,
+      'GITHUB_INVALID_RESPONSE',
+      `GitHub did not return file contents for ${path}.`
+    )
   }
 
   return {
@@ -116,12 +120,7 @@ export async function putRepoFile(
   }
 }
 
-export async function deleteRepoFile(
-  env: RuntimeEnv,
-  path: string,
-  message: string,
-  sha: string
-) {
+export async function deleteRepoFile(env: RuntimeEnv, path: string, message: string, sha: string) {
   const config = getGitHubConfig(env)
   const response = await githubRequest(
     config,
@@ -148,7 +147,11 @@ export async function listRepoPaths(env: RuntimeEnv, prefix: string) {
 
   const data = (await response.json()) as GitHubTreeResponse
   if (data.truncated) {
-    throw new ApiError(502, 'GITHUB_TREE_TRUNCATED', 'The repository tree is too large for the GitHub API.')
+    throw new ApiError(
+      502,
+      'GITHUB_TREE_TRUNCATED',
+      'The repository tree is too large for the GitHub API.'
+    )
   }
 
   return (data.tree ?? [])
@@ -156,11 +159,7 @@ export async function listRepoPaths(env: RuntimeEnv, prefix: string) {
     .map((entry) => entry.path!)
 }
 
-async function githubRequest(
-  config: GitHubConfig,
-  endpoint: string,
-  init: RequestInit = {}
-) {
+async function githubRequest(config: GitHubConfig, endpoint: string, init: RequestInit = {}) {
   try {
     return await fetch(`${config.apiBaseUrl}${endpoint}`, {
       ...init,

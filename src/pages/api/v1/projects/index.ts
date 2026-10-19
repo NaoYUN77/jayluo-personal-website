@@ -1,13 +1,6 @@
 import type { APIRoute } from 'astro'
-
 import { requireAuth } from '@/lib/api/auth'
-import {
-  apiRoute,
-  json,
-  readJsonBody,
-  successList,
-  triggerDeploy
-} from '@/lib/api/http'
+import { apiRoute, json, readJsonBody, successList, triggerDeploy } from '@/lib/api/http'
 import { createProject, listProjects } from '@/lib/api/projects'
 import { getRuntime } from '@/lib/api/runtime'
 

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { defaultOgPng } from '@/lib/og'
+
 import config from '@/site-config'
 
 export const prerender = true

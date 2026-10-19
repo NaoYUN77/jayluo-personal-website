@@ -94,11 +94,7 @@ const paginationProps = {
         {
           page.data.map((entry) => (
             <li class='glass-surface glass-interactive group relative rounded-lg p-4'>
-              <a
-                href={`/en/notes/${entry.data.translationKey}`}
-                class='block'
-                data-astro-prefetch
-              >
+              <a href={`/en/notes/${entry.data.translationKey}`} class='block' data-astro-prefetch>
                 <div class='mb-2 flex items-start gap-3'>
                   <div class='mt-0.5 shrink-0 text-xl opacity-70 group-hover:opacity-100'>
                     {typeIcons[entry.data.type] ?? '📝'}

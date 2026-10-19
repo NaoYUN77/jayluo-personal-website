@@ -28,11 +28,7 @@ export interface R2BucketLike {
     }
   ): Promise<R2ObjectLike>
   delete(key: string | string[]): Promise<void>
-  list(options?: {
-    prefix?: string
-    cursor?: string
-    limit?: number
-  }): Promise<{
+  list(options?: { prefix?: string; cursor?: string; limit?: number }): Promise<{
     objects: R2ObjectLike[]
     truncated: boolean
     cursor?: string

@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro'
-
 import { requireAuth } from '@/lib/api/auth'
 import { ApiError, apiRoute, json, requireBinding } from '@/lib/api/http'
 import {
@@ -9,10 +8,7 @@ import {
   serveMedia,
   uploadMedia
 } from '@/lib/api/media'
-import {
-  getRuntime,
-  runtimeNumber
-} from '@/lib/api/runtime'
+import { getRuntime, runtimeNumber } from '@/lib/api/runtime'
 
 export const prerender = false
 

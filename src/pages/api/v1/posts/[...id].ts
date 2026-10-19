@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro'
-
 import { requireAuth } from '@/lib/api/auth'
 import {
   ApiError,

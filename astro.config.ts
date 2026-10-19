@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import type { AstroIntegration } from 'astro'
-import { rehypeHeadingIds } from '@astrojs/markdown-remark'
 import cloudflare from '@astrojs/cloudflare'
+import { rehypeHeadingIds } from '@astrojs/markdown-remark'
 import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
 import AstroPureIntegration from 'astro-pure'
@@ -162,8 +162,7 @@ export default defineConfig({
       'import.meta.env.DRAFT_PREVIEW': JSON.stringify(
         process.env.DRAFT_PREVIEW === 'true' ||
           (Boolean(process.env.CF_PAGES_BRANCH) &&
-            process.env.CF_PAGES_BRANCH !==
-              (process.env.CF_PAGES_PRODUCTION_BRANCH || 'main'))
+            process.env.CF_PAGES_BRANCH !== (process.env.CF_PAGES_PRODUCTION_BRANCH || 'main'))
       )
     },
     plugins: [

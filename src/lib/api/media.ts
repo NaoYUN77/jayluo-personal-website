@@ -1,5 +1,5 @@
-import type { R2BucketLike, R2ObjectBodyLike, R2ObjectLike } from './runtime'
 import { ApiError } from './http'
+import type { R2BucketLike, R2ObjectBodyLike, R2ObjectLike } from './runtime'
 
 export const AVATAR_KEY = 'profile/avatar'
 
@@ -75,16 +75,19 @@ export function serveMedia(
       status: 304,
       headers: {
         etag,
-        'cache-control': options.cacheControl ?? object.httpMetadata?.cacheControl ?? 'public, max-age=3600'
+        'cache-control':
+          options.cacheControl ?? object.httpMetadata?.cacheControl ?? 'public, max-age=3600'
       }
     })
   }
 
   const headers = new Headers({
-    'content-type': object.httpMetadata?.contentType ?? options.fallbackContentType ?? 'application/octet-stream',
+    'content-type':
+      object.httpMetadata?.contentType ?? options.fallbackContentType ?? 'application/octet-stream',
     'content-length': String(object.size),
     etag,
-    'cache-control': options.cacheControl ?? object.httpMetadata?.cacheControl ?? 'public, max-age=3600',
+    'cache-control':
+      options.cacheControl ?? object.httpMetadata?.cacheControl ?? 'public, max-age=3600',
     'x-content-type-options': 'nosniff'
   })
 

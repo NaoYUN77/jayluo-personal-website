@@ -1,0 +1,1010 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+
+export const prerender = false
+---
+
+<BaseLayout meta={{ title: '管理后台', description: 'Jayluo blog 内容管理入口。', noindex: true }}>
+  <main class='admin-page animate'>
+    <header class='admin-toolbar'>
+      <div>
+        <p class='admin-eyebrow'>JAYLUO / ADMIN</p>
+        <h1>内容管理</h1>
+        <p class='admin-subtitle'>通过 content API 创建、编辑和删除文章与笔记。</p>
+      </div>
+      <a class='admin-btn admin-btn-ghost' href='/blog'>前台预览</a>
+    </header>
+
+    <form id='admin-auth' class='admin-card'>
+      <label class='admin-field'>
+        <span>Content API token</span>
+        <input
+          id='admin-token'
+          type='password'
+          autocomplete='off'
+          spellcheck='false'
+          placeholder='粘贴 CONTENT_API_TOKEN'
+          required
+        />
+      </label>
+      <button class='admin-btn' type='submit'>连接并加载</button>
+      <p id='admin-auth-status' class='admin-status' aria-live='polite'>
+        Token 只保存在当前浏览器的 localStorage。
+      </p>
+    </form>
+
+    <div class='admin-grid'>
+      <form id='admin-form' class='admin-card' novalidate>
+        <div class='admin-card-head'>
+          <h2 id='admin-form-title'>创建文章</h2>
+          <span id='admin-form-context' class='admin-chip'></span>
+        </div>
+
+        <div class='admin-fields'>
+          <label class='admin-field'>
+            <span>URL ID</span>
+            <input id='admin-id' required pattern='[a-z0-9][a-z0-9-]*' />
+          </label>
+
+          <label class='admin-field'>
+            <span>语言</span>
+            <select id='admin-locale'>
+              <option value='zh'>中文</option>
+              <option value='en'>English</option>
+            </select>
+          </label>
+
+          <label class='admin-field' data-post-field hidden>
+            <span>文章日期</span>
+            <input id='admin-publish-date' type='date' />
+          </label>
+
+          <label class='admin-field' data-note-field hidden>
+            <span>笔记日期</span>
+            <input id='admin-date' type='date' />
+          </label>
+
+          <label class='admin-field'>
+            <span>标题</span>
+            <input id='admin-title' maxlength='60' required />
+          </label>
+
+          <label class='admin-field'>
+            <span>摘要</span>
+            <input id='admin-description' maxlength='160' placeholder='用一句话说清楚这篇内容。' />
+          </label>
+
+          <label class='admin-field'>
+            <span>标签（逗号分隔）</span>
+            <input id='admin-tags' placeholder='site, meta' />
+          </label>
+
+          <label class='admin-field' data-note-field hidden>
+            <span>笔记类型</span>
+            <select id='admin-note-type'>
+              <option value='note'>note</option>
+              <option value='snippet'>snippet</option>
+              <option value='draft'>draft</option>
+              <option value='idea'>idea</option>
+              <option value='research'>research</option>
+              <option value='reference'>reference</option>
+            </select>
+          </label>
+
+          <label class='admin-field' data-note-field hidden>
+            <span>笔记状态</span>
+            <select id='admin-note-status'>
+              <option value='in-progress'>in-progress</option>
+              <option value='incomplete'>incomplete</option>
+              <option value='ready'>ready</option>
+              <option value='archived'>archived</option>
+            </select>
+          </label>
+
+          <label class='admin-field'>
+            <span>格式</span>
+            <select id='admin-format'>
+              <option value='mdx'>Markdown MDX</option>
+              <option value='md'>Plain Markdown</option>
+            </select>
+          </label>
+
+          <label class='admin-field admin-body-field'>
+            <span>正文 Markdown</span>
+            <textarea id='admin-body' rows='14'></textarea>
+          </label>
+        </div>
+
+        <label class='admin-check'>
+          <input id='admin-draft' type='checkbox' />
+          <span>保存为草稿</span>
+        </label>
+
+        <div class='admin-form-actions'>
+          <button class='admin-btn' type='submit' id='admin-submit'>创建</button>
+          <button class='admin-btn admin-btn-ghost' type='button' id='admin-reset'>清空</button>
+        </div>
+        <p id='admin-result' class='admin-status' aria-live='polite'></p>
+      </form>
+
+      <section class='admin-card'>
+        <div class='admin-card-head'>
+          <h2>内容列表</h2>
+          <div class='admin-collection'>
+            <button
+              class='admin-btn admin-btn-ghost is-active'
+              type='button'
+              data-collection='posts'
+            >
+              文章
+            </button>
+            <button class='admin-btn admin-btn-ghost' type='button' data-collection='notes'>
+              笔记
+            </button>
+            <button class='admin-btn admin-btn-ghost' type='button' id='admin-refresh'>刷新</button>
+          </div>
+        </div>
+        <div id='admin-list' class='admin-list'>
+          <p class='admin-status'>连接 token 后自动加载。</p>
+        </div>
+      </section>
+    </div>
+
+    <section class='admin-card'>
+      <div class='admin-card-head'>
+        <h2>图片 / 头像</h2>
+        <span class='admin-eyebrow'>R2 MEDIA</span>
+      </div>
+      <div class='admin-media-grid'>
+        <form id='media-form' class='admin-media-item'>
+          <input
+            id='media-file'
+            type='file'
+            accept='image/*,image/svg+xml'
+            aria-label='选择图片'
+            required
+          />
+          <input
+            id='media-key'
+            placeholder='media/2026-10/banner.png（可留空自动命名）'
+            spellcheck='false'
+          />
+          <button class='admin-btn' type='submit'>上传图片</button>
+        </form>
+        <form id='avatar-form' class='admin-media-item'>
+          <input
+            id='avatar-file'
+            type='file'
+            accept='image/*,image/svg+xml'
+            aria-label='选择头像'
+            required
+          />
+          <img id='avatar-preview' src='/api/v1/avatar' alt='当前头像' />
+          <div class='admin-media-actions'>
+            <button class='admin-btn' type='submit'>更新头像</button>
+            <button class='admin-btn admin-btn-danger' type='button' id='avatar-delete'>
+              删除头像
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .admin-page {
+    margin-top: 1.5rem;
+    display: grid;
+    gap: 1.35rem;
+  }
+
+  .admin-toolbar,
+  .admin-card {
+    border: 1px solid hsl(var(--glass-edge));
+    background-color: hsl(var(--glass-panel));
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow:
+      inset 0 1px 0 hsl(var(--glass-rim)),
+      inset 0 0 0 1px hsl(var(--glass-inner)),
+      0 18px 42px -26px hsl(var(--glass-shade));
+    border-radius: 16px;
+  }
+
+  .admin-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+    padding: 1.1rem 1.25rem;
+  }
+
+  .admin-eyebrow {
+    color: hsl(var(--muted-foreground));
+    font:
+      500 0.7rem 'JetBrains Mono',
+      ui-monospace,
+      monospace;
+    letter-spacing: 0.08em;
+  }
+
+  .admin-toolbar h1 {
+    margin: 0.35rem 0 0.25rem;
+    font-size: 1.55rem;
+    font-weight: 700;
+  }
+
+  .admin-subtitle {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .admin-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 1.35rem;
+  }
+
+  .admin-card {
+    padding: 1.25rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .admin-card-head,
+  .admin-form-actions,
+  .admin-media-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+  }
+
+  .admin-card-head h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 650;
+  }
+
+  .admin-chip {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.2rem 0.55rem;
+    background: hsl(var(--muted) / 0.8);
+    border-radius: 999px;
+    color: hsl(var(--muted-foreground));
+    font:
+      500 0.75rem 'JetBrains Mono',
+      ui-monospace,
+      monospace;
+  }
+
+  .admin-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.95rem;
+  }
+
+  .admin-field {
+    display: grid;
+    gap: 0.35rem;
+    color: hsl(var(--foreground) / 0.82);
+    font-size: 0.88rem;
+    font-weight: 520;
+  }
+
+  .admin-body-field,
+  .admin-check {
+    grid-column: 1 / -1;
+  }
+
+  .admin-check {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.9rem;
+    font-weight: 450;
+  }
+
+  .admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.35rem;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--primary) / 0.9);
+    color: hsl(var(--primary-foreground));
+    border-radius: 10px;
+    padding-inline: 0.75rem;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 550;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background-color 0.18s ease,
+      color 0.18s ease,
+      border-color 0.18s ease,
+      opacity 0.18s ease;
+  }
+
+  .admin-btn:hover {
+    background: hsl(var(--primary));
+  }
+
+  .admin-btn:focus-visible {
+    outline: 2px solid hsl(var(--primary) / 0.5);
+    outline-offset: 2px;
+  }
+
+  .admin-btn:disabled {
+    opacity: 0.62;
+    cursor: progress;
+  }
+
+  .admin-btn-ghost {
+    background: transparent;
+    color: hsl(var(--foreground));
+  }
+
+  .admin-btn-ghost:hover {
+    background: hsl(var(--muted) / 0.82);
+  }
+
+  .admin-btn-ghost.is-active {
+    background: hsl(var(--primary) / 0.14);
+    border-color: hsl(var(--primary) / 0.4);
+    color: hsl(var(--foreground));
+  }
+
+  .admin-btn-danger {
+    background: hsl(var(--destructive) / 0.78);
+    color: hsl(var(--destructive-foreground));
+  }
+
+  .admin-collection {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .admin-status {
+    margin-block: 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.88rem;
+  }
+
+  .admin-list {
+    display: grid;
+    gap: 0.7rem;
+    max-height: 34rem;
+    overflow: auto;
+    padding-right: 0.15rem;
+  }
+
+  .admin-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.8rem;
+    border: 1px solid hsl(var(--glass-edge));
+    background: hsl(var(--glass-panel-fallback) / 0.42);
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem;
+    transition:
+      border-color 0.18s ease,
+      background-color 0.18s ease;
+  }
+
+  .admin-row:hover {
+    background: hsl(var(--glass-panel-hover));
+    border-color: hsl(var(--glass-edge-hover));
+  }
+
+  .admin-row-title {
+    display: block;
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 560;
+    color: hsl(var(--foreground));
+    text-decoration: none;
+  }
+
+  .admin-row-title:hover {
+    color: hsl(var(--primary));
+  }
+
+  .admin-row-meta,
+  .admin-result-meta {
+    margin-top: 0.2rem;
+    color: hsl(var(--muted-foreground));
+    font:
+      500 0.74rem 'JetBrains Mono',
+      ui-monospace,
+      monospace;
+  }
+
+  .admin-row-actions {
+    display: inline-flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  .admin-row-btn {
+    height: 1.95rem;
+    min-width: 3rem;
+  }
+
+  .admin-media-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem;
+  }
+
+  .admin-media-item {
+    display: grid;
+    align-content: start;
+    gap: 0.7rem;
+  }
+
+  .admin-fields input,
+  .admin-fields select,
+  .admin-fields textarea,
+  .admin-media-item input:not([type='file']),
+  .admin-media-item input[type='file'] {
+    width: 100%;
+    min-height: 2.4rem;
+    border: 1px solid hsl(var(--glass-edge));
+    background: hsl(var(--glass-panel-fallback) / 0.3);
+    color: hsl(var(--foreground));
+    border-radius: 10px;
+    padding: 0.45rem 0.7rem;
+    font: inherit;
+    outline: 0;
+  }
+
+  .admin-fields input:focus,
+  .admin-fields select:focus,
+  .admin-fields textarea:focus,
+  .admin-media-item input:focus {
+    border-color: hsl(var(--primary) / 0.7);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.13);
+  }
+
+  .admin-fields textarea {
+    min-height: 15rem;
+    resize: vertical;
+    font:
+      15px/1.55 'JetBrains Mono',
+      ui-monospace,
+      monospace;
+  }
+
+  .admin-media-item img {
+    width: 100%;
+    height: 11rem;
+    object-fit: contain;
+    border-radius: 10px;
+    background: hsl(var(--muted) / 0.55);
+  }
+
+  .admin-result-meta {
+    display: grid;
+  }
+
+  @media (max-width: 800px) {
+    .admin-grid,
+    .admin-media-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-fields {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-card-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .admin-collection {
+      justify-content: flex-start;
+    }
+  }
+</style>
+
+<script>
+  type ApiEnvelope<T> = {
+    data?: T
+    meta?: {
+      commit?: string
+      deployQueued?: boolean
+    }
+  }
+  type ApiErrorEnvelope = {
+    error?: {
+      code?: string
+      message?: string
+    }
+  }
+  type Locale = 'zh' | 'en'
+  type Collection = 'posts' | 'notes'
+  type ApiRecord = {
+    id?: string
+    url?: string
+    title?: string
+    draft?: boolean
+    tags?: string[]
+    publishDate?: string
+    date?: string
+    locale?: Locale
+    body?: string
+    type?: string
+    status?: string
+  } & Record<string, unknown>
+
+  const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error))
+
+  const app = document.querySelector<HTMLElement>('main.admin-page')
+  const authForm = document.querySelector<HTMLFormElement>('#admin-auth')
+  const authStatus = document.querySelector<HTMLElement>('#admin-auth-status')
+  const authInput = document.querySelector<HTMLInputElement>('#admin-token')
+  const listPanel = document.querySelector<HTMLElement>('#admin-list')
+  const refreshButton = document.querySelector<HTMLButtonElement>('#admin-refresh')
+  const resultPanel = document.querySelector<HTMLElement>('#admin-result')
+  const form = document.querySelector<HTMLFormElement>('#admin-form')
+  const formTitle = document.querySelector<HTMLElement>('#admin-form-title')
+  const formContext = document.querySelector<HTMLElement>('#admin-form-context')
+  const fields = {
+    id: form?.querySelector<HTMLInputElement>('#admin-id'),
+    locale: form?.querySelector<HTMLSelectElement>('#admin-locale'),
+    publishDate: form?.querySelector<HTMLInputElement>('#admin-publish-date'),
+    noteDate: form?.querySelector<HTMLInputElement>('#admin-date'),
+    title: form?.querySelector<HTMLInputElement>('#admin-title'),
+    description: form?.querySelector<HTMLInputElement>('#admin-description'),
+    tags: form?.querySelector<HTMLInputElement>('#admin-tags'),
+    noteType: form?.querySelector<HTMLSelectElement>('#admin-note-type'),
+    noteStatus: form?.querySelector<HTMLSelectElement>('#admin-note-status'),
+    format: form?.querySelector<HTMLSelectElement>('#admin-format'),
+    body: form?.querySelector<HTMLTextAreaElement>('#admin-body'),
+    draft: form?.querySelector<HTMLInputElement>('#admin-draft'),
+    submit: form?.querySelector<HTMLButtonElement>('#admin-submit'),
+    reset: form?.querySelector<HTMLButtonElement>('#admin-reset')
+  }
+  const mediaForm = document.querySelector<HTMLFormElement>('#media-form')
+  const mediaKeyInput = document.querySelector<HTMLInputElement>('#media-key')
+  const avatarForm = document.querySelector<HTMLFormElement>('#avatar-form')
+  const resultMeta = document.createElement('p')
+  resultMeta.className = 'admin-result-meta'
+  resultPanel?.append(resultMeta)
+
+  const TOKEN_KEY = 'jayluo-admin-token'
+  const localeCode = (locale: Locale) => (locale === 'en' ? 'en' : 'zh')
+  const normalizeId = (id: string) => id.toLocaleLowerCase().replace(/\s+/g, '-').slice(0, 88)
+  const sanitizeToken = (value: string) => value.trim()
+  let token = ''
+  let collection: Collection = 'posts'
+  let editingId = ''
+  let loadedLocale: Locale = 'zh'
+  let timer = 0
+
+  function collectionLabel(value: Collection = collection) {
+    return value === 'posts' ? '文章' : '笔记'
+  }
+
+  function today() {
+    return new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10)
+  }
+
+  function patchHeader() {
+    if (formTitle) formTitle.textContent = `${editingId ? '编辑' : '创建'}${collectionLabel()}`
+  }
+
+  function setCollection(selection: Collection, keepEditing = false) {
+    collection = selection
+    if (!keepEditing) editingId = ''
+    app?.querySelectorAll<HTMLButtonElement>('[data-collection]').forEach((button) => {
+      button.classList.toggle('is-active', button.dataset.collection === selection)
+    })
+    app?.querySelectorAll<HTMLElement>('[data-post-field]').forEach((field) => {
+      field.hidden = selection !== 'posts'
+    })
+    app?.querySelectorAll<HTMLElement>('[data-note-field]').forEach((field) => {
+      field.hidden = selection !== 'notes'
+    })
+    patchHeader()
+  }
+
+  function resetForm() {
+    editingId = ''
+    setCollection(collection, true)
+    if (fields.id) fields.id.value = ''
+    if (fields.title) fields.title.value = ''
+    if (fields.description) fields.description.value = ''
+    if (fields.tags) fields.tags.value = ''
+    if (fields.body) fields.body.value = ''
+    if (fields.draft) fields.draft.checked = false
+    if (fields.publishDate) fields.publishDate.value = today()
+    if (fields.noteDate) fields.noteDate.value = today()
+    if (formContext) formContext.textContent = ''
+    resultPanel?.replaceChildren(resultMeta)
+    patchHeader()
+  }
+
+  function fillForm(record: ApiRecord) {
+    editingId = String(record.id ?? '')
+    loadedLocale = record.locale === 'en' ? 'en' : 'zh'
+    setCollection(collection, true)
+    if (fields.id) fields.id.value = String(record.id ?? '')
+    if (fields.locale) fields.locale.value = loadedLocale
+    if (fields.title) fields.title.value = String(record.title ?? '')
+    if (fields.description) fields.description.value = String(record.description ?? '')
+    if (fields.tags) fields.tags.value = Array.isArray(record.tags) ? record.tags.join(', ') : ''
+    if (fields.noteType) fields.noteType.value = String(record.type ?? 'note')
+    if (fields.noteStatus) fields.noteStatus.value = String(record.status ?? 'in-progress')
+    if (fields.draft) fields.draft.checked = Boolean(record.draft)
+    if (fields.body) fields.body.value = String(record.body ?? '')
+    if (fields.publishDate) fields.publishDate.value = String(record.publishDate ?? today())
+    if (fields.noteDate) fields.noteDate.value = String(record.date ?? today())
+    if (formContext) formContext.textContent = `${loadedLocale} · ${String(record.id).slice(0, 56)}`
+    resultPanel?.replaceChildren(resultMeta)
+    patchHeader()
+    form?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+
+  function saveToken(value: string) {
+    token = sanitizeToken(value)
+    window.localStorage.setItem(TOKEN_KEY, token)
+  }
+
+  function api(path: string, init: RequestInit = {}) {
+    const headers = new Headers(init.headers)
+    headers.set('Authorization', `Bearer ${token}`)
+    if (init.body != null && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json')
+    }
+    return fetch(new URL(path, window.location.origin), { ...init, headers })
+  }
+
+  async function failMessage(response: Response) {
+    try {
+      const payload = (await response.json()) as ApiErrorEnvelope
+      return payload.error?.message || payload.error?.code || `HTTP ${response.status}`
+    } catch {}
+    return `HTTP ${response.status}`
+  }
+
+  function showResult(message: string, meta?: { commit?: string; deployQueued?: boolean }) {
+    if (!resultPanel) return
+    resultPanel.replaceChildren()
+    const text = document.createElement('span')
+    text.textContent = message
+    if (meta?.commit) {
+      const details = document.createElement('span')
+      details.className = 'admin-result-meta'
+      details.textContent = `commit ${meta.commit.slice(0, 10)}${meta.deployQueued ? ' · deploy queued' : ''}`
+      text.append(details)
+    }
+    resultPanel.append(text)
+    window.clearTimeout(timer)
+    if (message.startsWith('HTTP') || message.includes('失败')) {
+      window.setTimeout(() => resultPanel.replaceChildren(), 4200)
+    }
+  }
+
+  function payload() {
+    if (!fields.locale) return null
+    const locale = (fields.locale.value || loadedLocale || 'zh') as Locale
+    const common = {
+      id: editingId || normalizeId(fields.id?.value ?? ''),
+      locale,
+      title: fields.title?.value.trim(),
+      tags: fields.tags?.value
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean),
+      draft: Boolean(fields.draft?.checked),
+      body: fields.body?.value ?? ''
+    }
+    if (collection === 'posts') {
+      const value = {
+        ...common,
+        description: fields.description?.value.trim(),
+        publishDate: fields.publishDate?.value || today(),
+        format: fields.format?.value || 'mdx'
+      }
+      return locale === 'en'
+        ? { ...value, language: 'en', translationKey: `${value.id}/post` }
+        : value
+    }
+    const value = {
+      ...common,
+      description: fields.description?.value.trim() ?? '',
+      date: fields.noteDate?.value || today(),
+      type: fields.noteType?.value || 'note',
+      status: fields.noteStatus?.value || 'in-progress',
+      format: fields.format?.value || 'md'
+    }
+    return locale === 'en' ? { ...value, language: 'en', translationKey: value.id } : value
+  }
+
+  authForm?.addEventListener('submit', async (event) => {
+    event.preventDefault()
+    token = sanitizeToken(authInput?.value ?? '')
+    if (!token) {
+      if (authStatus) authStatus.textContent = '请先填入 token。'
+      return
+    }
+    if (authStatus) authStatus.textContent = '正在校验...'
+    try {
+      const response = await api('health')
+      if (!response.ok) throw new Error(await failMessage(response))
+      saveToken(token)
+      const health = (await response.json()) as ApiEnvelope<{
+        capabilities?: Record<string, boolean>
+      }>
+      const capabilities = health.data?.capabilities
+      if (authStatus)
+        authStatus.textContent =
+          capabilities?.contentCrud && capabilities.media
+            ? '已连接。'
+            : '已连接，但部分能力未启用。'
+      if (authInput) authInput.value = ''
+      resetForm()
+      await loadList(loadedLocale)
+    } catch (error) {
+      if (authStatus) authStatus.textContent = `连接失败 ${errorMessage(error)}`
+    }
+  })
+
+  app?.querySelectorAll<HTMLButtonElement>('[data-collection]').forEach((button) => {
+    button.addEventListener('click', () => {
+      resetForm()
+      setCollection(button.dataset.collection as Collection, false)
+      patchHeader()
+      if (token) loadList(loadedLocale)
+    })
+  })
+
+  async function loadList(locale: Locale = loadedLocale) {
+    if (!token || !listPanel) return
+    if (refreshButton) refreshButton.disabled = true
+    const link = new URL(collection, window.location.origin)
+    link.searchParams.set('limit', '50')
+    link.searchParams.set('drafts', 'all')
+    listPanel.replaceChildren()
+    const loading = document.createElement('p')
+    loading.className = 'admin-status'
+    loading.textContent = '正在加载...'
+    listPanel.append(loading)
+    try {
+      const query = new URLSearchParams({
+        locale,
+        limit: '50',
+        offset: '0',
+        drafts: 'all',
+        includeBody: 'false'
+      })
+      const response = await api(`/${collection}?${query.toString()}`)
+      if (!response.ok) throw new Error(await failMessage(response))
+      const result = (await response.json()) as ApiEnvelope<ApiRecord[]>
+      const records = result.data ?? []
+      listPanel.replaceChildren(...records.map((record) => addRecordRow(record, loadedLocale)))
+      if (records.length === 0) {
+        const empty = document.createElement('p')
+        empty.className = 'admin-status'
+        empty.textContent = '还没有内容。'
+        listPanel.append(empty)
+      }
+    } catch (error) {
+      loading.textContent = `加载失败 ${errorMessage(error)}`
+    } finally {
+      if (refreshButton) refreshButton.disabled = false
+    }
+  }
+
+  function button(parent: HTMLElement, label: string, handler: () => void) {
+    const item = document.createElement('button')
+    item.className = 'admin-btn admin-btn-ghost admin-row-btn'
+    item.type = 'button'
+    item.textContent = label
+    item.addEventListener('click', handler)
+    parent.append(item)
+    return item
+  }
+
+  function addRecordRow(record: ApiRecord, locale: Locale) {
+    const row = document.createElement('article')
+    row.className = 'admin-row'
+    const info = document.createElement('div')
+    if (record.url) {
+      const link = document.createElement('a')
+      link.className = 'admin-row-title'
+      link.href = record.url
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      link.textContent = String(record.title ?? record.id)
+      info.append(link)
+    }
+    const meta = document.createElement('p')
+    meta.className = 'admin-row-meta'
+    const date = record.publishDate ?? record.date
+    meta.textContent = [
+      localeCode((record.locale ?? loadedLocale) as Locale),
+      String(record.id),
+      String(date ?? ''),
+      Boolean(record.draft) ? 'draft' : ''
+    ]
+      .filter(Boolean)
+      .join(' · ')
+    info.append(meta)
+    const actions = document.createElement('div')
+    actions.className = 'admin-row-actions'
+    button(actions, '编辑', async () => {
+      try {
+        const response = await api(
+          `/${collection}/${encodeURIComponent(String(record.id))}?locale=${locale}&includeBody=true`
+        )
+        if (!response.ok) throw new Error(await failMessage(response))
+        const result = (await response.json()) as ApiEnvelope<ApiRecord>
+        const content = result.data
+        if (content) fillForm(content)
+      } catch (error) {
+        showResult(`获取内容失败 ${errorMessage(error)}`)
+      }
+    })
+    button(actions, '删除', async () => {
+      if (!confirm('确定要删除这条内容?')) return
+      try {
+        const response = await api(
+          `/${collection}/${encodeURIComponent(String(record.id))}?locale=${locale}`,
+          { method: 'DELETE' }
+        )
+        if (!response.ok) throw new Error(await failMessage(response))
+        await loadList(locale)
+        showResult('已删除。')
+      } catch (error) {
+        showResult(`删除失败 ${errorMessage(error)}`)
+      }
+    })
+    row.append(info, actions)
+    return row
+  }
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault()
+    if (!form.checkValidity() || !token) return
+    const body = payload()
+    if (!body?.id) return
+    const method = editingId ? 'PATCH' : 'POST'
+    const path = editingId
+      ? `/${collection}/${encodeURIComponent(editingId)}?locale=${loadedLocale}`
+      : `/${collection}`
+    if (fields.submit) fields.submit.disabled = true
+    showResult(editingId ? '更新中...' : '创建中...')
+    try {
+      const response = await api(path, { method, body: JSON.stringify(body) })
+      if (!response.ok) throw new Error(await failMessage(response))
+      const result = (await response.json()) as ApiEnvelope<ApiRecord>
+      editingId = String(result.data?.id ?? '')
+      const record = result.data
+      if (!record) throw new Error('接口响应缺少 data。')
+      patchHeader()
+      if (formContext) formContext.textContent = `${loadedLocale} · ${record.id}`
+      showResult('内容已保存。', result.meta)
+      await loadList(loadedLocale)
+    } catch (error) {
+      showResult(`保存失败 ${errorMessage(error)}`)
+    } finally {
+      if (fields.submit) fields.submit.disabled = false
+    }
+  })
+
+  mediaForm?.addEventListener('submit', async (event) => {
+    event.preventDefault()
+    const input = document.querySelector<HTMLInputElement>('#media-file')
+    if (!input?.files?.[0]) return
+    const image = input.files[0]
+    const formBody = new FormData()
+    formBody.append('file', image)
+    const selectedKey = normalizeId(mediaKeyInput?.value ?? '')
+    if (selectedKey) formBody.append('key', selectedKey)
+    try {
+      const response = await api('media', { method: 'POST', body: formBody })
+      if (!response.ok) throw new Error(await failMessage(response))
+      const result = (await response.json()) as ApiEnvelope<{
+        key?: string
+        url?: string
+        path?: string
+      }>
+      const data = result.data
+      showResult('图片已上传。', result.meta)
+      if (mediaKeyInput && data) {
+        mediaKeyInput.value = String(data.key ?? data.path ?? '')
+      }
+      if (data?.url) window.open(String(data.url), '_blank', 'noopener')
+      input.value = ''
+    } catch (error) {
+      showResult(`上传失败 ${errorMessage(error)}`)
+    }
+  })
+
+  avatarForm?.addEventListener('submit', async (event) => {
+    event.preventDefault()
+    const input = document.querySelector<HTMLInputElement>('#avatar-file')
+    if (!input?.files?.[0]) return
+    const avatar = input.files[0]
+    try {
+      const response = await api('avatar', {
+        method: 'PUT',
+        body: await avatar.arrayBuffer(),
+        headers: { 'content-type': avatar.type || 'application/octet-stream' }
+      })
+      if (!response.ok) throw new Error(await failMessage(response))
+      showResult('头像已更新。')
+      const preview = document.querySelector<HTMLImageElement>('#avatar-preview')
+      preview?.setAttribute('src', `/api/v1/avatar?t=${Date.now()}`)
+      input.value = ''
+    } catch (error) {
+      showResult(`头像更新失败 ${errorMessage(error)}`)
+    }
+  })
+
+  document.querySelector('#avatar-delete')?.addEventListener('click', async () => {
+    if (!confirm('确定删除当前头像?')) return
+    try {
+      const response = await api('avatar', { method: 'DELETE' })
+      if (!response.ok) throw new Error(await failMessage(response))
+      showResult('头像已删除。')
+      const preview = document.querySelector<HTMLImageElement>('#avatar-preview')
+      preview?.setAttribute('src', '/avatar-fallback.svg')
+    } catch (error) {
+      showResult(`删除失败 ${errorMessage(error)}`)
+    }
+  })
+
+  fields.id?.addEventListener('input', () => {
+    if (editingId) return
+    if (fields.id) fields.id.value = normalizeId(fields.id.value)
+  })
+
+  fields.locale?.addEventListener('change', () => {
+    loadedLocale = (fields.locale?.value || 'zh') as Locale
+    loadList(loadedLocale)
+  })
+
+  refreshButton?.addEventListener('click', () => loadList(loadedLocale))
+
+  fields.reset?.addEventListener('click', resetForm)
+
+  const start = async () => {
+    if (!app || !authForm || !form) return
+    setCollection('posts')
+    loadedLocale = 'zh'
+    resetForm()
+    const saved = sanitizeToken(window.localStorage.getItem(TOKEN_KEY) ?? '')
+    if (!saved) return
+    token = saved
+    if (authStatus) authStatus.textContent = '正在使用保存的 token 校验...'
+    try {
+      const response = await api('health')
+      if (response.ok) {
+        if (authStatus) authStatus.textContent = '已连接。'
+        await loadList()
+      } else {
+        if (authStatus) authStatus.textContent = `保存的 token 失效 ${await failMessage(response)}`
+      }
+    } catch (error) {
+      if (authStatus) authStatus.textContent = `连接失败 ${errorMessage(error)}`
+    }
+    if (authInput) authInput.value = ''
+  }
+
+  start()
+</script>

@@ -1,4 +1,3 @@
-import type { RuntimeEnv } from './runtime'
 import {
   asRecord,
   compactObject,
@@ -13,6 +12,7 @@ import {
 } from './frontmatter'
 import { getRepoFile, putRepoFile } from './github'
 import { ApiError } from './http'
+import type { RuntimeEnv } from './runtime'
 
 const PROJECTS_PATH = 'src/data/projects.json'
 const STATUSES = ['active', 'paused', 'archived'] as const
@@ -87,11 +87,7 @@ export async function createProject(env: RuntimeEnv, input: Record<string, unkno
   }
 }
 
-export async function updateProject(
-  env: RuntimeEnv,
-  id: string,
-  input: Record<string, unknown>
-) {
+export async function updateProject(env: RuntimeEnv, id: string, input: Record<string, unknown>) {
   const state = await readProjects(env)
   const index = state.projects.findIndex((entry) => entry.id === id)
   if (index === -1) return null

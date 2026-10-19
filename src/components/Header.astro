@@ -34,8 +34,7 @@ const menu = (config.header?.menu ?? [])
   .map((item) => {
     const key = menuKeyMap[item.link]
     const active =
-      Astro.url.pathname === item.link ||
-      Astro.url.pathname.startsWith(`${item.link}/`)
+      Astro.url.pathname === item.link || Astro.url.pathname.startsWith(`${item.link}/`)
     return {
       title: key ? t(key) : item.title,
       link: localizedPath(item.link, lang),

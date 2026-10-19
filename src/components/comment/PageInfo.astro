@@ -1,5 +1,6 @@
 ---
 import config from 'virtual:config'
+
 import { cn } from 'astro-pure/utils'
 
 interface Props {
@@ -18,7 +19,7 @@ const path = stripEn(pathProp ?? Astro.url.pathname)
 {
   walineEnabled && (
     <div class={cn('text-base text-sm text-muted-foreground', className)}>
-      <span class='waline-pageview-count' data-path={path}></span> views
+      <span class='waline-pageview-count' data-path={path} /> views
       {!hideComment && (
         <a href='#waline'>
           | <span class='waline-comment-count' data-path={path} /> comments

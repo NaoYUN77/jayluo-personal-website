@@ -121,7 +121,9 @@ function buildProjectDocs(lang: ProjectLocale): SearchDoc[] {
     url: `${prefix}/projects#${encodeURIComponent(project.id)}`,
     date: '',
     tags: [...project.stack, project.status],
-    body: [project.name, project[lang].description, project.stack.join(' '), project.status].join(' ')
+    body: [project.name, project[lang].description, project.stack.join(' '), project.status].join(
+      ' '
+    )
   }))
 }
 

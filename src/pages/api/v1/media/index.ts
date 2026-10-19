@@ -1,14 +1,6 @@
 import type { APIRoute } from 'astro'
-
 import { requireAuth } from '@/lib/api/auth'
-import {
-  ApiError,
-  apiRoute,
-  json,
-  parseInteger,
-  requireBinding,
-  successList
-} from '@/lib/api/http'
+import { ApiError, apiRoute, json, parseInteger, requireBinding, successList } from '@/lib/api/http'
 import {
   detectImage,
   generatedMediaKey,
@@ -17,10 +9,7 @@ import {
   normalizeMediaPrefix,
   uploadMedia
 } from '@/lib/api/media'
-import {
-  getRuntime,
-  runtimeNumber
-} from '@/lib/api/runtime'
+import { getRuntime, runtimeNumber } from '@/lib/api/runtime'
 
 export const prerender = false
 
@@ -41,7 +30,7 @@ export const GET: APIRoute = async ({ request, locals }) =>
         prefix,
         count: result.objects.length,
         truncated: result.truncated,
-        cursor: result.truncated ? result.cursor ?? null : null
+        cursor: result.truncated ? (result.cursor ?? null) : null
       }
     )
   })

@@ -28,8 +28,7 @@ export type RssNote = {
 }
 
 export type RssEntry<P extends RssPost = RssPost, N extends RssNote = RssNote> =
-  | { kind: 'post'; entry: P }
-  | { kind: 'note'; entry: N }
+  { kind: 'post'; entry: P } | { kind: 'note'; entry: N }
 
 type Tagged<P extends RssPost, N extends RssNote> = RssEntry<P, N> & { sortDate: number }
 

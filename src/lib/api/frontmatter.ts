@@ -40,9 +40,7 @@ export function serializeMarkdownDocument(document: MarkdownDocument) {
 }
 
 export function compactObject<T extends Record<string, unknown>>(value: T) {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, entry]) => entry !== undefined)
-  ) as T
+  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as T
 }
 
 export function removeNullFields(value: Record<string, unknown>) {
@@ -133,11 +131,7 @@ export function readStringArray(
   return [...new Set(normalized)]
 }
 
-export function readEnum<T extends string>(
-  value: unknown,
-  field: string,
-  allowed: readonly T[]
-) {
+export function readEnum<T extends string>(value: unknown, field: string, allowed: readonly T[]) {
   const text = readRequiredString(value, field)
   if (!allowed.includes(text as T)) {
     throw new ApiError(400, 'INVALID_FIELD', `${field} must be one of: ${allowed.join(', ')}.`)
@@ -147,11 +141,7 @@ export function readEnum<T extends string>(
 
 export function readSlug(value: unknown, field = 'id') {
   const text = readRequiredString(value, field, { max: 96 })
-  if (
-    !/^[a-z0-9][a-z0-9-]*$/.test(text) ||
-    text.endsWith('-') ||
-    text.includes('..')
-  ) {
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(text) || text.endsWith('-') || text.includes('..')) {
     throw new ApiError(
       400,
       'INVALID_ID',

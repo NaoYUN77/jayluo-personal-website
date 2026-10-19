@@ -1,6 +1,7 @@
 ---
-export const prerender = true
 import PageLayout from '@/layouts/CommonPage.astro'
+
+export const prerender = true
 
 const headings = [
   { depth: 2, slug: 'how-to-reach', text: 'How to reach me' },
@@ -9,7 +10,9 @@ const headings = [
 ---
 
 <PageLayout title='Contact' {headings} info='/en/contact'>
-  <p>Email is the most reliable way to reach me. Replace the placeholder address below with your own.</p>
+  <p>
+    Email is the most reliable way to reach me. Replace the placeholder address below with your own.
+  </p>
 
   <h2 id='how-to-reach'>How to reach me</h2>
   <ul>

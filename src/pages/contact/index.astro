@@ -1,6 +1,7 @@
 ---
-export const prerender = true
 import PageLayout from '@/layouts/CommonPage.astro'
+
+export const prerender = true
 
 const headings = [
   { depth: 2, slug: 'how-to-reach', text: '联系方式' },
@@ -9,9 +10,7 @@ const headings = [
 ---
 
 <PageLayout title='联系' {headings} info='/contact'>
-  <p>
-    最直接的方式是发邮件。把下面的占位地址换成你自己的邮箱。
-  </p>
+  <p>最直接的方式是发邮件。把下面的占位地址换成你自己的邮箱。</p>
 
   <h2 id='how-to-reach'>联系方式</h2>
   <ul>

@@ -80,8 +80,8 @@ title: 标题
 description: 一句话摘要
 date: 2026-10-17
 tags: ['标签']
-type: note        # note | snippet | draft | idea | research | reference
-status: ready     # in-progress | incomplete | ready | archived
+type: note # note | snippet | draft | idea | research | reference
+status: ready # in-progress | incomplete | ready | archived
 ---
 ```
 

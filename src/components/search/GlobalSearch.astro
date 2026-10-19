@@ -1,6 +1,7 @@
 ---
-import { Icon } from 'astro-pure/user'
 import type { Lang } from '@/i18n/ui'
+
+import { Icon } from 'astro-pure/user'
 
 interface Props {
   lang: Lang
@@ -40,11 +41,7 @@ const copy = isEn
   data-note={isEn ? 'Note' : '笔记'}
   data-project={isEn ? 'Project' : '项目'}
 >
-  <dialog
-    class='site-search-dialog'
-    data-site-search-dialog
-    aria-labelledby='site-search-title'
-  >
+  <dialog class='site-search-dialog' data-site-search-dialog aria-labelledby='site-search-title'>
     <div class='site-search-panel'>
       <header class='site-search-head'>
         <div>
@@ -201,7 +198,9 @@ const copy = isEn
       this.request?.abort()
 
       if (!this.isSearchable(query)) {
-        this.setEmpty(this.dataset.lang === 'en' ? 'Type at least 2 characters.' : '至少输入 2 个字符。')
+        this.setEmpty(
+          this.dataset.lang === 'en' ? 'Type at least 2 characters.' : '至少输入 2 个字符。'
+        )
         return
       }
 

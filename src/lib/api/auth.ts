@@ -16,10 +16,7 @@ export async function requireAuth(request: Request, env: RuntimeEnv) {
     throw new ApiError(401, 'UNAUTHORIZED', 'Use Authorization: Bearer <CONTENT_API_TOKEN>.')
   }
 
-  const [actual, expected] = await Promise.all([
-    digest(match[1]),
-    digest(env.CONTENT_API_TOKEN)
-  ])
+  const [actual, expected] = await Promise.all([digest(match[1]), digest(env.CONTENT_API_TOKEN)])
   if (!timingSafeEqual(actual, expected)) {
     throw new ApiError(401, 'UNAUTHORIZED', 'Invalid API token.')
   }
