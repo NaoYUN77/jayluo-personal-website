@@ -1,0 +1,121 @@
+---
+import type { Project } from '@/data/projects'
+import type { Lang } from '@/i18n/ui'
+
+import HomeHero from './HomeHero.astro'
+
+import '@/assets/styles/landing.css'
+
+interface Props {
+  lang: Lang
+  posts: { title: string; href: string; date: Date; tags: string[] }[]
+  notes: { title: string; href: string }[]
+  projects: (Project & { description: string })[]
+}
+const { lang, posts, notes, projects } = Astro.props
+const isEn = lang === 'en'
+const prefix = isEn ? '/en' : ''
+const status = { active: 'ACTIVE', paused: 'PAUSED', archived: 'ARCHIVED' }
+const dateLabel = (date: Date) => date.toISOString().slice(0, 10).replaceAll('-', '.')
+---
+
+<main class='landing-page'>
+  <HomeHero {lang} />
+  {
+    posts.length > 0 && (
+      <section class='landing-section' aria-labelledby='save-heading'>
+        <h2 id='save-heading'>
+          <span class='landing-pixel'>SAVE</span> / {isEn ? 'Recent saves' : '最近存档'}
+        </h2>
+        <ol class='save-slots'>
+          {posts.slice(0, 5).map((post, index) => (
+            <li>
+              <a
+                class:list={['save-slot', 'pixel-frame', { 'save-slot-latest': index === 0 }]}
+                href={post.href}
+              >
+                <span class='save-number landing-pixel'>
+                  SLOT {String(index + 1).padStart(2, '0')}
+                </span>
+                <time class='save-date' datetime={post.date.toISOString()}>
+                  {dateLabel(post.date)}
+                </time>
+                <h3>{post.title}</h3>
+                <span class='save-tags'>{post.tags.join(' · ')}</span>
+                {index === 0 && (
+                  <span class='save-continue landing-pixel'>
+                    <span aria-hidden='true'>▶ </span>CONTINUE
+                  </span>
+                )}
+              </a>
+            </li>
+          ))}
+        </ol>
+        <a class='landing-more' href={`${prefix}/blog`}>
+          {isEn ? 'All posts' : '全部文章'} <span aria-hidden='true'>→</span>
+        </a>
+      </section>
+    )
+  }
+  {
+    projects.length > 0 && (
+      <section class='landing-section' aria-labelledby='cartridges-heading'>
+        <h2 id='cartridges-heading'>
+          <span class='landing-pixel'>CARTRIDGES</span> / {isEn ? 'Projects' : '项目'}
+        </h2>
+        <ul class='cartridge-grid'>
+          {projects.map((project) => (
+            <li>
+              <a
+                class='cartridge pixel-frame'
+                href={project.repo ?? `${prefix}/projects#${project.id}`}
+                target={project.repo ? '_blank' : undefined}
+                rel={project.repo ? 'noopener noreferrer' : undefined}
+                data-analytics-event='project_link_click'
+                data-analytics-section='home_featured'
+                data-analytics-target={project.id}
+              >
+                <span class='cartridge-groove' aria-hidden='true' />
+                <h3 class='cartridge-label landing-pixel'>{project.name.toUpperCase()}</h3>
+                <p>{project.description}</p>
+                <span class='cartridge-stack'>{project.stack.join(' · ')}</span>
+                <span
+                  class:list={[
+                    'cartridge-status',
+                    'landing-pixel',
+                    `cartridge-status-${project.status}`
+                  ]}
+                >
+                  <span aria-hidden='true'>● </span>
+                  {status[project.status]}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        <a class='landing-more' href={`${prefix}/projects`}>
+          {isEn ? 'All projects' : '全部项目'} <span aria-hidden='true'>→</span>
+        </a>
+      </section>
+    )
+  }
+  {
+    notes.length > 0 && (
+      <section class='notes-ticker pixel-frame' aria-label={isEn ? 'Recent notes' : '最近笔记'}>
+        <h2 class='landing-pixel'>
+          NOTES <span aria-hidden='true'>▶</span>
+        </h2>
+        <div class='notes-window'>
+          <ul class='notes-track'>
+            {notes.map((note) => (
+              <li>
+                <a href={note.href}>{note.title}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+  <footer class='landing-footer landing-pixel'>© JAYLUO · 1P</footer>
+</main>

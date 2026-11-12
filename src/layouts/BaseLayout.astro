@@ -31,6 +31,7 @@ const {
 } = Astro.props
 
 const lang = getLangFromUrl(Astro.url)
+const isHome = /^\/(?:en\/?)?$/.test(Astro.url.pathname)
 const htmlLang = lang === 'en' ? 'en' : config.locale.lang
 ---
 
@@ -59,9 +60,9 @@ const htmlLang = lang === 'en' ? 'en' : config.locale.lang
       {chrome && <Header lang={lang} />}
       {chrome && <GlobalSearch lang={lang} />}
       <slot />
-      {chrome && <Footer />}
+      {chrome && !isHome && <Footer />}
     </div>
-    <VirtualMascot lang={lang} />
+    {!isHome && <VirtualMascot lang={lang} />}
     <AnalyticsEvents />
 
     {/* Set highlight color */}

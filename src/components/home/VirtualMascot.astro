@@ -230,6 +230,27 @@ const pixels = (rows: string[], offset = 0) =>
     border-bottom: 4px solid var(--bubble-fg);
     box-shadow: 4px 0 0 var(--bubble-fg);
   }
+  :global([data-ghost-dock]) .ghost-pet {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: 220px;
+    max-width: 100%;
+    z-index: 1;
+  }
+  :global([data-ghost-dock]) .ghost-speech {
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: min(320px, calc(100vw - 100px));
+  }
+  :global([data-ghost-dock]) .ghost-speech::after {
+    left: calc(50% - 10px);
+  }
+  @media (max-width: 640px) {
+    :global([data-ghost-dock]) .ghost-pet {
+      width: 140px;
+    }
+  }
   @keyframes float {
     50% {
       transform: translateY(-2px);
@@ -269,7 +290,7 @@ const pixels = (rows: string[], offset = 0) =>
   @keyframes escape {
     40%,
     60% {
-      transform: translateX(calc(-100% - 100px));
+      transform: translateX(calc(-100vw - 100%));
     }
   }
   @keyframes sleepy {
