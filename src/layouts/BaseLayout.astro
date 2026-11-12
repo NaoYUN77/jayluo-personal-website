@@ -6,6 +6,7 @@ import { Footer } from 'astro-pure/components/basic'
 import type { SiteMeta } from 'astro-pure/types'
 import AnalyticsEvents from '@/components/AnalyticsEvents.astro'
 import BaseHead from '@/components/BaseHead.astro'
+import BootScreen from '@/components/BootScreen.astro'
 import Header from '@/components/Header.astro'
 import VirtualMascot from '@/components/home/VirtualMascot.astro'
 import GlobalSearch from '@/components/search/GlobalSearch.astro'
@@ -47,6 +48,7 @@ const htmlLang = lang === 'en' ? 'en' : config.locale.lang
     class='flex justify-center bg-background text-foreground'
     {...props}
   >
+    <BootScreen />
     {
       highlightColor && (
         <div
