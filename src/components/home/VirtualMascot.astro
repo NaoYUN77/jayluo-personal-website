@@ -5,46 +5,111 @@ interface Props {
   lang: Lang
 }
 const { lang } = Astro.props
-const label = lang === 'en' ? "Greet Jayluo's virtual avatar" : '和 Jayluo 的虚拟形象打招呼'
+const label = lang === 'en' ? 'pixel ghost' : '像素小幽灵'
+// Reference: ghost-pixels.py, 16×16 frames A and B.
+const frameA = [
+  '................',
+  '.....OOOOOO.....',
+  '...OOWWWWWWOO...',
+  '..OWWWWWWWWWWO..',
+  '.OWWWWWWWWWWWWO.',
+  '.OWWWEEWWEEWWWO.',
+  'OWWWWEEWWEEWWWSO',
+  'OWWWWWWWWWWWWWSO',
+  'OWWPPWWWWWWPPWSO',
+  'OWWWWWWOOWWWWWSO',
+  'OWWWWWWWWWWWWWSO',
+  'OWWWWWWWWWWWWSSO',
+  'OWWWWWWWWWWWWSSO',
+  'OWWSOWWWSOWWWSSO',
+  'OWSO.OWSO.OWSSO.',
+  '.OO...OO...OOO..'
+]
+const frameB = [...frameA.slice(0, 13), 'OWWWSOWWWSOWWSSO', '.OWSO.OWSO.OWSO.', '..OO...OO...OO..']
+const colors: Record<string, string> = {
+  O: 'var(--ghost-outline, #212529)',
+  W: '#ffffff',
+  S: '#d3d3d3',
+  E: '#ffffff', // White beneath the separately animated eyes.
+  P: '#f4a6b8'
+}
+const pixels = (rows: string[], offset = 0) =>
+  rows.flatMap((row, y) =>
+    [...row].flatMap((color, x) =>
+      colors[color] ? [{ x, y: y + offset, fill: colors[color] }] : []
+    )
+  )
 ---
 
-<button class='pixel-mascot' type='button' aria-label={label} title={label} data-pixel-mascot>
-  <span class='pixel-mascot-meta' aria-hidden='true'><span>JAY / 01</span><span>READY</span></span>
-  <svg viewBox='0 0 64 40' aria-hidden='true' shape-rendering='crispEdges'>
-    <path
-      class='pixel-ground'
-      d='M4 36h56v1H4zM8 32h2v2H8zM54 28h2v2h-2zM5 10h4v1H5zM7 8h1v5H7zM53 6h4v1h-4zM55 4h1v5h-1z'
-    ></path>
-    <g class='pixel-person'>
-      <path
-        fill='currentColor'
-        d='M25 5h14v2h3v3h2v13h-3v3h-3v2h4v3h3v5H19v-5h3v-3h4v-2h-3v-3h-3V10h2V7h3z'></path>
-      <path class='pixel-face' d='M25 12h14v3h2v7h-3v3H26v-3h-3v-7h2z'></path>
-      <path fill='currentColor' d='M26 16h4v4h-4zM35 16h4v4h-4zM30 22h5v1h-5z'></path>
-      <path class='pixel-shirt' d='M27 28h10l-5 5zM30 33h4v3h-4z'></path>
-      <g class='pixel-hand'
-        ><path fill='currentColor' d='M42 26h5v-4h3v-6h3v10h-3v4h-8z'></path><path
-          class='pixel-face'
-          d='M49 16h3v5h-3z'></path></g
-      >
-    </g>
-  </svg>
-  <span class='pixel-mascot-caption' aria-hidden='true'
-    >{lang === 'en' ? 'HELLO, WORLD!' : '你好，世界！'}</span
-  >
-</button>
+<div class='ghost-pet' data-ghost-pet data-lang={lang}>
+  <button class='pixel-mascot' type='button' aria-label={label} title={label}>
+    <span class='pixel-mascot-meta' aria-hidden='true'
+      ><span>GHOST / 01</span><span>READY</span></span
+    >
+    <svg viewBox='0 0 64 40' aria-hidden='true' shape-rendering='crispEdges'>
+      <g transform='translate(24 11)'>
+        <g class='ghost-body'>
+          {pixels(frameA.slice(0, 13)).map((pixel) => <rect {...pixel} width='1' height='1' />)}
+          {
+            [frameA, frameB].map((frame, index) => (
+              <g class:list={['ghost-skirt', `ghost-skirt-${index}`]}>
+                {pixels(frame.slice(13), 13).map((pixel) => (
+                  <rect {...pixel} width='1' height='1' />
+                ))}
+              </g>
+            ))
+          }
+          <g class='ghost-eyes' fill='#212529'>
+            <rect x='5' y='5' width='2' height='2'></rect>
+            <rect x='9' y='5' width='2' height='2'></rect>
+          </g>
+          <g class='ghost-happy-eyes' fill='#212529'>
+            {
+              [5, 9].map((x) => (
+                <>
+                  <rect x={x + 1} y='5' width='1' height='1' />
+                  <rect x={x} y='6' width='1' height='1' />
+                  <rect x={x + 2} y='6' width='1' height='1' />
+                </>
+              ))
+            }
+          </g>
+        </g>
+      </g>
+    </svg>
+    <span class='pixel-mascot-caption' aria-hidden='true'>
+      {lang === 'en' ? 'HELLO, WORLD!' : '你好，世界！'}
+    </span>
+  </button>
+  <span class='ghost-speech' role='status' aria-live='polite' aria-atomic='true'></span>
+</div>
 
 <script>
-  document.querySelectorAll<HTMLButtonElement>('[data-pixel-mascot]').forEach((button) => {
+  document.querySelectorAll<HTMLElement>('[data-ghost-pet]').forEach((pet) => {
+    const button = pet.querySelector('button')
+    const speech = pet.querySelector<HTMLElement>('.ghost-speech')
+    if (!button || !speech) return
+    const phrases =
+      pet.dataset.lang === 'en'
+        ? ['boo!', 'What will you write today?', 'Did you Ctrl+S?']
+        : ['boo!', '今天写点什么？', 'Ctrl+S 了吗？']
+    let timeout: ReturnType<typeof setTimeout>
     button.addEventListener('click', () => {
-      button.classList.remove('is-waving')
-      requestAnimationFrame(() => button.classList.add('is-waving'))
+      clearTimeout(timeout)
+      speech.textContent = phrases[Math.floor(Math.random() * phrases.length)]
+      pet.classList.add('is-speaking')
+      timeout = setTimeout(() => {
+        pet.classList.remove('is-speaking')
+        speech.textContent = ''
+      }, 3500)
     })
-    button.addEventListener('animationend', () => button.classList.remove('is-waving'))
   })
 </script>
 
 <style>
+  .ghost-pet {
+    position: relative;
+  }
   .pixel-mascot {
     display: grid;
     width: 100%;
@@ -54,6 +119,11 @@ const label = lang === 'en' ? "Greet Jayluo's virtual avatar" : '和 Jayluo 的�
     background: hsl(var(--muted));
     color: hsl(var(--foreground));
     text-align: left;
+    cursor: pointer;
+  }
+  .pixel-mascot:focus-visible {
+    outline: 4px solid hsl(var(--primary));
+    outline-offset: 4px;
   }
   .pixel-mascot-meta {
     display: flex;
@@ -67,28 +137,99 @@ const label = lang === 'en' ? "Greet Jayluo's virtual avatar" : '和 Jayluo 的�
     border: 4px solid currentColor;
     background: hsl(var(--background));
   }
-  .pixel-face,
-  .pixel-shirt {
-    fill: hsl(var(--background));
-  }
-  .pixel-ground {
-    fill: hsl(var(--border));
+  :global(html.dark) .ghost-pet {
+    --ghost-outline: #e9ecef;
   }
   .pixel-mascot-caption {
     text-align: center;
     font-size: 12px;
     line-height: 2;
   }
-  .pixel-hand {
-    transform-origin: 44px 28px;
+  .ghost-body {
+    animation: float 2400ms steps(2, end) infinite;
   }
-  .pixel-mascot:hover .pixel-hand,
-  .is-waving .pixel-hand {
-    animation: wave 600ms steps(2, end) 2;
+  .ghost-skirt-0 {
+    animation: skirt 800ms steps(1, end) infinite;
   }
-  @keyframes wave {
+  .ghost-skirt-1 {
+    opacity: 0;
+    animation: skirt 800ms steps(1, end) infinite reverse;
+  }
+  .ghost-eyes {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: blink 5200ms steps(1, end) infinite;
+  }
+  .ghost-happy-eyes {
+    display: none;
+  }
+  .pixel-mascot:is(:hover, :focus-visible) .ghost-eyes {
+    display: none;
+  }
+  .pixel-mascot:is(:hover, :focus-visible) .ghost-happy-eyes {
+    display: inline;
+  }
+  .ghost-speech {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    right: 0;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 4px solid hsl(var(--foreground));
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    box-shadow: 4px 4px 0 hsl(var(--border));
+    font-family: var(--pixel-display), monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .is-speaking .ghost-speech {
+    opacity: 1;
+  }
+  .ghost-speech::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    bottom: -12px;
+    width: 8px;
+    height: 8px;
+    border-right: 4px solid hsl(var(--foreground));
+    border-bottom: 4px solid hsl(var(--foreground));
+    background: hsl(var(--background));
+  }
+  @keyframes float {
     50% {
-      transform: rotate(-20deg);
+      transform: translateY(-2px);
+    }
+  }
+  @keyframes skirt {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes blink {
+    0%,
+    94%,
+    98%,
+    100% {
+      transform: scaleY(1);
+    }
+    96% {
+      transform: scaleY(0.25);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ghost-body,
+    .ghost-skirt,
+    .ghost-eyes {
+      animation: none;
     }
   }
 </style>
