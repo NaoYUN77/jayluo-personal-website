@@ -270,15 +270,30 @@ const pixels = (rows: string[], offset = 0) =>
     display: none;
   }
   .is-positioned {
-    left: var(--ghost-x);
-    top: var(--ghost-y);
+    left: 0;
+    top: 0;
+    transform: translate(var(--ghost-x), var(--ghost-y));
     right: auto;
     bottom: auto;
   }
   .is-roaming {
-    transition:
-      left 2s linear,
-      top 2s linear;
+    transition: transform 2s linear;
+  }
+  .is-scroll-paused {
+    transition: none !important;
+  }
+  .is-scroll-paused * {
+    animation-play-state: paused !important;
+  }
+  :global(#content),
+  :global(.prose) {
+    width: calc(100% - var(--boo-reading-gutter, 0px));
+    min-width: 0;
+  }
+  @media (max-width: 767px) {
+    .ghost-pet:not([data-hero-mode='true']) {
+      bottom: calc(152px + env(safe-area-inset-bottom));
+    }
   }
   .is-looking .ghost-eyes {
     animation: look 800ms steps(1, end) 2;

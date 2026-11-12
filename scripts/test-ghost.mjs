@@ -401,22 +401,42 @@ test('quiet is remembered, stops the hero and activities, and clicking Boo resto
   assert.equal(y.state().line, 'hero')
 })
 
-test('wide-screen roaming stays outside main, selection and scrolling return Boo to its corner', () => {
+test('wide-screen roaming stays outside main and scrolling freezes Boo in place', () => {
   const x = mount()
   x.tick(14000)
   assert(x.pet.classes.has('is-roaming'))
   assert(parseFloat(x.pet.style['--ghost-x']) >= x.main.box.right + 12)
   x.select('selected text')
-  assert(!x.pet.classes.has('is-roaming'))
   const position = x.pet.style['--ghost-x']
   x.tick(20000)
   assert.equal(x.pet.style['--ghost-x'], position)
   x.select('')
   x.win.dispatchEvent(new Event('scroll'))
   assert(!x.pet.classes.has('is-roaming'))
+  assert(x.pet.classes.has('is-scroll-paused'))
+  assert(x.pet.classes.has('hide-bubble'))
+  const frozen = [x.pet.style['--ghost-x'], x.pet.style['--ghost-y']]
+  for (let i = 0; i < 5; i++) {
+    x.tick(700)
+    x.win.dispatchEvent(new Event('scroll'))
+    x.win.dispatchEvent(new Event('resize'))
+    assert.deepEqual([x.pet.style['--ghost-x'], x.pet.style['--ghost-y']], frozen)
+  }
+  x.tick(1000)
+  assert(x.pet.classes.has('is-scroll-paused'))
+  x.tick(100)
+  assert(!x.pet.classes.has('is-scroll-paused'))
+  assert.deepEqual([x.pet.style['--ghost-x'], x.pet.style['--ghost-y']], frozen)
   const mobile = mount({ width: 390 })
   mobile.tick(40000)
   assert(!mobile.pet.classes.has('is-roaming'))
+  for (const type of ['scroll', 'touchmove', 'resize']) {
+    mobile.win.dispatchEvent(new Event(type))
+    mobile.tick(500)
+    assert(!mobile.pet.classes.has('is-positioned'))
+    assert(!mobile.pet.classes.has('is-cameo'))
+    assert(mobile.pet.classes.has('is-scroll-paused'))
+  }
 })
 
 test('cameos stop at two per page and each phrase is used once per session', () => {
@@ -510,4 +530,59 @@ test('hero waits for boot to finish before starting its first full sentence', ()
   assert.equal(x.speech.textContent, 'boo! Welcome! I am Boo')
   x.tick(4999)
   assert.equal(x.state().choice, 0)
+})
+
+test('prose blocks cameo destinations and the swept movement path', () => {
+  const prose = {
+    style: { setProperty() {}, removeProperty() {} },
+    getBoundingClientRect: () => ({
+      left: 80,
+      top: 0,
+      right: 1595,
+      bottom: 2000,
+      width: 1515,
+      height: 2000
+    })
+  }
+  const x = mount({
+    pathname: '/blog/post',
+    article: { textContent: 'Article', getBoundingClientRect: prose.getBoundingClientRect },
+    pageLists: { '#content,.prose': [prose] }
+  })
+  x.tick(40000)
+  assert(x.pet.classes.has('is-obstructed'))
+  assert(!x.pet.classes.has('is-cameo'))
+  assert(!x.pet.classes.has('is-positioned'))
+  assert.notEqual(x.state().line, 'cameo')
+  // Both endpoints fit, but the route between them crosses a narrow prose obstacle.
+  const crossing = {
+    ...prose,
+    getBoundingClientRect: () => ({
+      left: 1479,
+      top: 0,
+      right: 1480,
+      bottom: 2000,
+      width: 1,
+      height: 2000
+    })
+  }
+  const y = mount({
+    pathname: '/blog/post',
+    article: {
+      textContent: 'Article',
+      getBoundingClientRect: () => ({
+        left: 80,
+        top: 100,
+        right: 1360,
+        bottom: 1800,
+        width: 1280,
+        height: 1700
+      })
+    },
+    pageLists: { '#content,.prose': [crossing] }
+  })
+  y.tick(30000)
+  assert(!y.pet.classes.has('is-obstructed'))
+  assert(!y.pet.classes.has('is-cameo'))
+  assert.equal(y.state().pageCounts['/blog/post'], undefined)
 })

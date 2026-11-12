@@ -62,6 +62,18 @@ export function createGhostActivity(
   let lookTimer: ReturnType<typeof setTimeout> | undefined
   let activeCameo = false
   let shyUntil = 0
+  let settleTimer: ReturnType<typeof setTimeout> | undefined
+  let viewportWidth = innerWidth
+  const prose = () => [...document.querySelectorAll<HTMLElement>('#content,.prose')]
+  // A fixed pet needs an actual reading gutter, not just padding at the document end.
+  const reserveReadingGutter = () => {
+    for (const node of prose()) {
+      node.style.removeProperty('--boo-reading-gutter')
+      const right = node.getBoundingClientRect().right
+      const reserve = Math.max(0, right - (innerWidth - pet.offsetWidth - 24))
+      node.style.setProperty('--boo-reading-gutter', `${reserve}px`)
+    }
+  }
   const visibleSince = new Map<string, number>()
   const selecting = () => !!window.getSelection()?.toString().trim()
   const size = () => ({ width: pet.offsetWidth, height: pet.offsetHeight })
@@ -92,22 +104,26 @@ export function createGhostActivity(
       clearPosition()
       return
     }
+    if (innerWidth < 768) {
+      clearPosition()
+      return
+    }
     const { width, height } = size()
     const buttons = document.querySelector('#action-buttons')?.getBoundingClientRect()
     const bottom =
-      buttons && buttons.top < innerHeight ? Math.max(16, innerHeight - buttons.top + 14) : 16
+      buttons && buttons.top < innerHeight ? Math.max(160, innerHeight - buttons.top + 14) : 160
     const candidates = [
       { x: innerWidth - width - 12, y: innerHeight - height - bottom },
       { x: innerWidth - width - 12, y: innerHeight - height - 16 },
       { x: innerWidth - width - (innerWidth < 640 ? 76 : 100), y: innerHeight - height - 16 }
     ]
-    const obstacles = blocked()
+    const obstacles = [...blocked(), ...prose().map((node) => node.getBoundingClientRect())]
     const point = candidates.find((point) =>
       safeGhostPoint(point, width, height, { width: innerWidth, height: innerHeight }, obstacles)
     )
     pet.classList.remove('is-roaming', 'is-looking', 'is-cameo')
     pet.classList.toggle('is-obstructed', !point)
-    if (point) place(point)
+    if (point) place(point, current !== null)
   }
   const cancel = () => {
     clearTimeout(returnTimer)
@@ -115,7 +131,7 @@ export function createGhostActivity(
     activeCameo = false
     nextRoam = Date.now() + 10000 + Math.random() * 10000
     options.interrupt()
-    corner()
+    if (Date.now() >= scrollingUntil) corner()
   }
   const contentRight = () => {
     const rects = [...document.querySelectorAll<HTMLElement>('main,.prose')]
@@ -124,6 +140,8 @@ export function createGhostActivity(
     return rects.length ? Math.max(...rects.map((rect) => rect.right)) : innerWidth
   }
   const canMove = () =>
+    innerWidth >= 768 &&
+    rail() !== null &&
     !options.home() &&
     !options.disabled() &&
     !document.querySelector('dialog[open]') &&
@@ -138,12 +156,25 @@ export function createGhostActivity(
   }
   const safe = (point: GhostPoint) => {
     const { width, height } = size()
-    return safeGhostPoint(
-      point,
+    return safeGhostPoint(point, width, height, { width: innerWidth, height: innerHeight }, [
+      ...blocked(),
+      ...prose().map((node) => node.getBoundingClientRect())
+    ])
+  }
+  const safePath = (point: GhostPoint) => {
+    if (!safe(point)) return false
+    const actual = pet.getBoundingClientRect()
+    const { width, height } = size()
+    const swept = {
+      left: Math.min(actual.left, point.x),
+      top: Math.min(actual.top, point.y),
+      right: Math.max(actual.left, point.x) + width,
+      bottom: Math.max(actual.top, point.y) + height,
       width,
-      height,
-      { width: innerWidth, height: innerHeight },
-      blocked()
+      height
+    }
+    return ![...blocked(), ...prose().map((node) => node.getBoundingClientRect())].some((rect) =>
+      boxesOverlap(swept, rect)
     )
   }
   const visible = (node: Element | null) => {
@@ -213,10 +244,11 @@ export function createGhostActivity(
         point = bottom.x >= rail()! && safe(bottom) ? bottom : current!
       }
       if (!point || !safe(point)) continue
+      if (!safePath(point)) continue
       activeCameo = true
       nextCameo = Date.now() + 16000
       pet.dataset.cameo = kind
-      place(point)
+      place(point, true)
       pet.classList.add('is-cameo')
       options.cameo(kind, choices[Math.floor(Math.random() * choices.length)])
       returnTimer = setTimeout(() => {
@@ -235,7 +267,7 @@ export function createGhostActivity(
       Math.random() < 0.5
         ? { x: start + Math.random() * Math.max(0, innerWidth - width - 12 - start), y: current.y }
         : { x: current.x, y: Math.max(64, innerHeight - height - 260) + Math.random() * 120 }
-    if (!safe(point)) return
+    if (!safePath(point)) return
     const swept = {
       left: Math.min(current.x, point.x),
       top: Math.min(current.y, point.y),
@@ -261,10 +293,13 @@ export function createGhostActivity(
         (bubble.top < 8 ||
           bubble.left < 8 ||
           bubble.right > innerWidth - 8 ||
-          blocked().some((rect) => boxesOverlap(bubble, rect)))
+          [...blocked(), ...prose().map((node) => node.getBoundingClientRect())].some((rect) =>
+            boxesOverlap(bubble, rect)
+          ))
     )
   }
   const pulse = () => {
+    if (Date.now() < scrollingUntil) return
     if (
       !options.home() &&
       !activeCameo &&
@@ -279,19 +314,51 @@ export function createGhostActivity(
     }
   }
   const reset = () => {
+    clearTimeout(settleTimer)
+    scrollingUntil = 0
+    viewportWidth = innerWidth
+    clearPosition()
     entered = Date.now()
     nextCameo = Date.now() + 12000
     visibleSince.clear()
     nextRoam = Date.now() + 10000 + Math.random() * 10000
+    pet.classList.remove('is-scroll-paused')
+    reserveReadingGutter()
     cancel()
   }
   const onScroll = () => {
-    scrollingUntil = Date.now() + 1400
+    scrollingUntil = Date.now() + 1100
     visibleSince.clear()
-    cancel()
+    if (!options.home()) pet.classList.add('hide-bubble')
+    clearTimeout(returnTimer)
+    clearTimeout(lookTimer)
+    clearTimeout(settleTimer)
+    // Freeze the currently painted transform once, without returning to the dock.
+    if (!pet.classList.contains('is-scroll-paused')) {
+      const actual = pet.getBoundingClientRect()
+      pet.classList.add('is-scroll-paused')
+      if (current) place({ x: actual.left, y: actual.top })
+      activeCameo = false
+      pet.classList.remove('is-cameo', 'is-looking')
+      options.interrupt()
+    }
+    nextRoam = scrollingUntil + 10000 + Math.random() * 10000
+    settleTimer = setTimeout(() => {
+      pet.classList.remove('is-scroll-paused')
+      if (viewportWidth !== innerWidth) {
+        viewportWidth = innerWidth
+        reserveReadingGutter()
+        corner()
+      } else if (current && !safe(current)) corner()
+      protect()
+    }, 1100)
   }
   window.addEventListener('scroll', onScroll, { passive: true, capture: true })
-  window.addEventListener('resize', reset)
+  window.addEventListener('touchmove', onScroll, { passive: true })
+  window.addEventListener('wheel', onScroll, { passive: true })
+  window.addEventListener('resize', onScroll)
+  window.visualViewport?.addEventListener('resize', onScroll)
+  window.visualViewport?.addEventListener('scroll', onScroll)
   document.addEventListener('focusin', (event) => {
     if (!pet.contains(event.target as Node)) cancel()
   })
@@ -321,7 +388,7 @@ export function createGhostActivity(
         return
       shyUntil = Date.now() + 3000
       const point = { x: actual.left, y: Math.max(64, actual.top - 48) }
-      if (safe(point)) place(point, true)
+      if (safePath(point)) place(point, true)
     },
     { passive: true }
   )
