@@ -28,6 +28,7 @@ const target =
 </button>
 
 <script>
+  import { navigate } from 'astro:transitions/client'
   import { trackSiteEvent } from '@/lib/analytics'
 
   const LEAVE_DURATION = 250
@@ -48,13 +49,13 @@ const target =
     const destination = next + window.location.search + window.location.hash
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduceMotion) {
-      window.location.href = destination
+      void navigate(destination)
       return
     }
 
     btn.classList.add('leaving')
     window.setTimeout(() => {
-      window.location.href = destination
+      void navigate(destination)
     }, LEAVE_DURATION)
   })
 </script>

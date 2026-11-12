@@ -41,13 +41,10 @@ const pixels = (rows: string[], offset = 0) =>
   )
 ---
 
-<div class='ghost-pet' data-ghost-pet data-lang={lang}>
+<div class='ghost-pet' data-ghost-pet data-lang={lang} transition:persist='pixel-ghost'>
   <button class='pixel-mascot' type='button' aria-label={label} title={label}>
-    <span class='pixel-mascot-meta' aria-hidden='true'
-      ><span>GHOST / 01</span><span>READY</span></span
-    >
-    <svg viewBox='0 0 64 40' aria-hidden='true' shape-rendering='crispEdges'>
-      <g transform='translate(24 11)'>
+    <svg viewBox='-2 -3 20 22' aria-hidden='true' shape-rendering='crispEdges'>
+      <g class='ghost-action'>
         <g class='ghost-body'>
           {pixels(frameA.slice(0, 13)).map((pixel) => <rect {...pixel} width='1' height='1' />)}
           {
@@ -63,6 +60,11 @@ const pixels = (rows: string[], offset = 0) =>
             <rect x='5' y='5' width='2' height='2'></rect>
             <rect x='9' y='5' width='2' height='2'></rect>
           </g>
+          <g class='ghost-sleep-eyes' fill='#212529'
+            ><rect x='5' y='6' width='2' height='1'></rect><rect x='9' y='6' width='2' height='1'
+            ></rect></g
+          >
+          <rect class='ghost-mouth' x='7' y='9' width='2' height='3' fill='#212529'></rect>
           <g class='ghost-happy-eyes' fill='#212529'>
             {
               [5, 9].map((x) => (
@@ -77,73 +79,51 @@ const pixels = (rows: string[], offset = 0) =>
         </g>
       </g>
     </svg>
-    <span class='pixel-mascot-caption' aria-hidden='true'>
-      {lang === 'en' ? 'HELLO, WORLD!' : '你好，世界！'}
-    </span>
+    <span class='ghost-z' aria-hidden='true'>Z</span>
   </button>
-  <span class='ghost-speech' role='status' aria-live='polite' aria-atomic='true'></span>
+  <span class='ghost-speech' data-ghost-speech aria-hidden='true'></span>
+  <span class='sr-only' data-ghost-live role='status' aria-live='polite' aria-atomic='true'></span>
 </div>
 
 <script>
-  document.querySelectorAll<HTMLElement>('[data-ghost-pet]').forEach((pet) => {
-    const button = pet.querySelector('button')
-    const speech = pet.querySelector<HTMLElement>('.ghost-speech')
-    if (!button || !speech) return
-    const phrases =
-      pet.dataset.lang === 'en'
-        ? ['boo!', 'What will you write today?', 'Did you Ctrl+S?']
-        : ['boo!', '今天写点什么？', 'Ctrl+S 了吗？']
-    let timeout: ReturnType<typeof setTimeout>
-    button.addEventListener('click', () => {
-      clearTimeout(timeout)
-      speech.textContent = phrases[Math.floor(Math.random() * phrases.length)]
-      pet.classList.add('is-speaking')
-      timeout = setTimeout(() => {
-        pet.classList.remove('is-speaking')
-        speech.textContent = ''
-      }, 3500)
-    })
-  })
+  import { initGhost } from '@/lib/ghost'
+
+  initGhost()
 </script>
 
 <style>
   .ghost-pet {
-    position: relative;
+    --bubble-bg: #fff;
+    --bubble-fg: #212529;
+    position: fixed;
+    left: max(12px, env(safe-area-inset-left));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    width: 80px;
+    z-index: 25;
+    pointer-events: none;
   }
   .pixel-mascot {
-    display: grid;
+    position: relative;
+    display: block;
     width: 100%;
-    padding: 12px;
-    gap: 12px;
-    border: 4px solid hsl(var(--foreground));
-    background: hsl(var(--muted));
-    color: hsl(var(--foreground));
-    text-align: left;
+    padding: 0;
+    border: 0;
+    background: transparent;
     cursor: pointer;
+    pointer-events: auto;
   }
   .pixel-mascot:focus-visible {
     outline: 4px solid hsl(var(--primary));
     outline-offset: 4px;
   }
-  .pixel-mascot-meta {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--pixel-display);
-    font-size: 8px;
-    line-height: 2;
-  }
   svg {
     width: 100%;
-    border: 4px solid currentColor;
-    background: hsl(var(--background));
+    overflow: visible;
   }
   :global(html.dark) .ghost-pet {
     --ghost-outline: #e9ecef;
-  }
-  .pixel-mascot-caption {
-    text-align: center;
-    font-size: 12px;
-    line-height: 2;
+    --bubble-bg: #212529;
+    --bubble-fg: #fff;
   }
   .ghost-body {
     animation: float 2400ms steps(2, end) infinite;
@@ -160,7 +140,10 @@ const pixels = (rows: string[], offset = 0) =>
     transform-origin: center;
     animation: blink 5200ms steps(1, end) infinite;
   }
-  .ghost-happy-eyes {
+  .ghost-happy-eyes,
+  .ghost-sleep-eyes,
+  .ghost-mouth,
+  .ghost-z {
     display: none;
   }
   .pixel-mascot:is(:hover, :focus-visible) .ghost-eyes {
@@ -169,22 +152,68 @@ const pixels = (rows: string[], offset = 0) =>
   .pixel-mascot:is(:hover, :focus-visible) .ghost-happy-eyes {
     display: inline;
   }
+  .pixel-mascot:is(:hover, :focus-visible) .ghost-action {
+    animation: hop 600ms steps(2, end) infinite;
+  }
+  .is-boo .ghost-action {
+    animation: boo 450ms steps(2, end);
+    transform-origin: 8px 8px;
+  }
+  .is-boo .ghost-mouth {
+    display: inline;
+  }
+  .is-escaping .pixel-mascot {
+    animation: escape 1800ms steps(8, end);
+  }
+  .is-sleeping .ghost-body,
+  .is-sleeping .ghost-skirt,
+  .is-sleeping .ghost-eyes {
+    animation: none;
+  }
+  .is-sleeping .ghost-eyes,
+  .is-sleeping .ghost-happy-eyes {
+    display: none;
+  }
+  .is-sleeping .ghost-sleep-eyes,
+  .is-sleeping .ghost-z {
+    display: inline;
+  }
+  .ghost-z {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-family: var(--pixel-body);
+    color: hsl(var(--foreground));
+    animation: sleepy 2s steps(3, end) infinite;
+  }
   .ghost-speech {
     position: absolute;
-    bottom: calc(100% + 12px);
-    right: 0;
-    max-width: 100%;
-    padding: 8px 12px;
-    border: 4px solid hsl(var(--foreground));
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
-    box-shadow: 4px 4px 0 hsl(var(--border));
-    font-family: var(--pixel-display), monospace;
-    font-size: 12px;
-    line-height: 1.8;
+    bottom: calc(100% + 16px);
+    left: 8px;
+    width: max-content;
+    max-width: min(280px, calc(100vw - 40px));
+    padding: 12px 16px;
+    border: 0;
+    background: var(--bubble-bg);
+    color: var(--bubble-fg);
+    box-shadow:
+      4px 0 0 var(--bubble-bg),
+      -4px 0 0 var(--bubble-bg),
+      0 4px 0 var(--bubble-bg),
+      0 -4px 0 var(--bubble-bg),
+      8px 0 0 var(--bubble-fg),
+      -8px 0 0 var(--bubble-fg),
+      0 8px 0 var(--bubble-fg),
+      0 -8px 0 var(--bubble-fg),
+      4px 4px 0 var(--bubble-fg),
+      -4px 4px 0 var(--bubble-fg),
+      4px -4px 0 var(--bubble-fg),
+      -4px -4px 0 var(--bubble-fg);
+    font-family: var(--pixel-body);
+    font-size: 16px;
+    line-height: 1.6;
     overflow-wrap: anywhere;
     opacity: 0;
-    pointer-events: none;
   }
   .is-speaking .ghost-speech {
     opacity: 1;
@@ -192,13 +221,14 @@ const pixels = (rows: string[], offset = 0) =>
   .ghost-speech::after {
     content: '';
     position: absolute;
-    right: 16px;
-    bottom: -12px;
-    width: 8px;
-    height: 8px;
-    border-right: 4px solid hsl(var(--foreground));
-    border-bottom: 4px solid hsl(var(--foreground));
-    background: hsl(var(--background));
+    left: 24px;
+    bottom: -20px;
+    width: 16px;
+    height: 16px;
+    background: var(--bubble-bg);
+    border-left: 4px solid var(--bubble-fg);
+    border-bottom: 4px solid var(--bubble-fg);
+    box-shadow: 4px 0 0 var(--bubble-fg);
   }
   @keyframes float {
     50% {
@@ -225,11 +255,43 @@ const pixels = (rows: string[], offset = 0) =>
       transform: scaleY(0.25);
     }
   }
+  @keyframes hop {
+    50% {
+      transform: translateY(-2px);
+    }
+  }
+  @keyframes boo {
+    30%,
+    70% {
+      transform: scale(1.2);
+    }
+  }
+  @keyframes escape {
+    40%,
+    60% {
+      transform: translateX(calc(-100% - 100px));
+    }
+  }
+  @keyframes sleepy {
+    to {
+      transform: translateY(-12px);
+      opacity: 0;
+    }
+  }
+  @media (max-width: 640px) {
+    :global(body) {
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+    .ghost-pet {
+      width: 48px;
+      left: max(4px, env(safe-area-inset-left));
+      bottom: max(8px, env(safe-area-inset-bottom));
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .ghost-body,
-    .ghost-skirt,
-    .ghost-eyes {
-      animation: none;
+    .ghost-pet *,
+    .pixel-mascot:is(:hover, :focus-visible) .ghost-action {
+      animation: none !important;
     }
   }
 </style>

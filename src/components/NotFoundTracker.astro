@@ -5,33 +5,38 @@
 ---
 
 <script>
-  const analyticsWindow = window as typeof window & {
-    __siteAnalyticsQueue?: Array<{ eventName: string; properties: Record<string, string | null> }>
-    __trackSiteAnalytics?: (detail: {
-      eventName: string
-      properties: Record<string, string | null>
-    }) => void
-  }
+  import { onPageLoad } from '@/lib/page-lifecycle'
 
-  let referrer: URL | null = null
-  try {
-    referrer = document.referrer ? new URL(document.referrer) : null
-  } catch {}
-  const internal = referrer?.hostname === location.hostname
-
-  const detail = {
-    eventName: 'page_not_found',
-    properties: {
-      source: !referrer ? 'direct' : internal ? 'internal' : 'external',
-      referrer_host: referrer?.hostname ?? null,
-      // Only our own pages: the page that holds the broken link.
-      referrer_page: internal ? referrer!.pathname : null
+  onPageLoad(() => {
+    if (document.body.dataset.pageKind !== '404') return
+    const analyticsWindow = window as typeof window & {
+      __siteAnalyticsQueue?: Array<{ eventName: string; properties: Record<string, string | null> }>
+      __trackSiteAnalytics?: (detail: {
+        eventName: string
+        properties: Record<string, string | null>
+      }) => void
     }
-  }
 
-  if (analyticsWindow.__trackSiteAnalytics) {
-    analyticsWindow.__trackSiteAnalytics(detail)
-  } else {
-    ;(analyticsWindow.__siteAnalyticsQueue ??= []).push(detail)
-  }
+    let referrer: URL | null = null
+    try {
+      referrer = document.referrer ? new URL(document.referrer) : null
+    } catch {}
+    const internal = referrer?.hostname === location.hostname
+
+    const detail = {
+      eventName: 'page_not_found',
+      properties: {
+        source: !referrer ? 'direct' : internal ? 'internal' : 'external',
+        referrer_host: referrer?.hostname ?? null,
+        // Only our own pages: the page that holds the broken link.
+        referrer_page: internal ? referrer!.pathname : null
+      }
+    }
+
+    if (analyticsWindow.__trackSiteAnalytics) {
+      analyticsWindow.__trackSiteAnalytics(detail)
+    } else {
+      ;(analyticsWindow.__siteAnalyticsQueue ??= []).push(detail)
+    }
+  })
 </script>

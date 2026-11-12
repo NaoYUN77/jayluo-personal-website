@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from 'astro:transitions'
 import { getLangFromUrl } from '@/i18n/ui'
 
 import { Footer } from 'astro-pure/components/basic'
@@ -6,6 +7,7 @@ import type { SiteMeta } from 'astro-pure/types'
 import AnalyticsEvents from '@/components/AnalyticsEvents.astro'
 import BaseHead from '@/components/BaseHead.astro'
 import Header from '@/components/Header.astro'
+import VirtualMascot from '@/components/home/VirtualMascot.astro'
 import GlobalSearch from '@/components/search/GlobalSearch.astro'
 import ThemeProvider from '@/components/ThemeProvider.astro'
 import config from '@/site-config'
@@ -36,9 +38,14 @@ const htmlLang = lang === 'en' ? 'en' : config.locale.lang
   <head>
     <BaseHead {articleDate} {articleModified} {description} {noindex} {ogImage} {title} />
     <ThemeProvider />
+    <ClientRouter />
   </head>
 
-  <body class='flex justify-center bg-background text-foreground' {...props}>
+  <body
+    data-page-kind={title === '404' ? '404' : undefined}
+    class='flex justify-center bg-background text-foreground'
+    {...props}
+  >
     {
       highlightColor && (
         <div
@@ -54,6 +61,7 @@ const htmlLang = lang === 'en' ? 'en' : config.locale.lang
       <slot />
       {chrome && <Footer />}
     </div>
+    <VirtualMascot lang={lang} />
     <AnalyticsEvents />
 
     {/* Set highlight color */}

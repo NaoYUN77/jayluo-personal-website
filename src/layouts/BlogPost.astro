@@ -9,7 +9,7 @@ import 'katex/dist/katex.min.css'
 import { getLangFromUrl } from '@/i18n/ui'
 
 import { MediumZoom } from 'astro-pure/advanced'
-import { ArticleBottom, Copyright, Hero } from 'astro-pure/components/pages'
+import { ArticleBottom } from 'astro-pure/components/pages'
 import PageLayout from '@/layouts/ContentLayout.astro'
 import CopyrightEn from '@/components/blog/CopyrightEn.astro'
 import HeroEn from '@/components/blog/HeroEn.astro'
@@ -33,8 +33,7 @@ const {
   headings,
   remarkPluginFrontmatter,
   back = '/blog',
-  recommend = true,
-  enHero = false
+  recommend = true
 } = Astro.props
 
 const { description, publishDate, title, updatedDate } = data
@@ -110,19 +109,13 @@ const breadcrumbLd = {
   <JsonLd schema={[articleLd, breadcrumbLd]} />
   {!!tocHeadings.length && <TableOfContents headings={tocHeadings} slot='sidebar' />}
 
-  {
-    enHero ? (
-      <HeroEn {data} {remarkPluginFrontmatter} slot='header' />
-    ) : (
-      <Hero {data} {remarkPluginFrontmatter} slot='header' />
-    )
-  }
+  <HeroEn {data} {remarkPluginFrontmatter} slot='header' />
 
   <slot />
 
   <Fragment slot='bottom'>
     {/* Copyright */}
-    {lang === 'en' ? <CopyrightEn {data} /> : <Copyright {data} />}
+    <CopyrightEn {data} />
     {/* Jojo: end-of-post card (static, one short reaction) */}
     {/* Article recommend */}
     {

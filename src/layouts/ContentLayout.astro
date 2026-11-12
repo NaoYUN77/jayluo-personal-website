@@ -82,62 +82,74 @@ const { meta, highlightColor, back = '/', surface = true, ...props } = Astro.pro
 </PageLayout>
 
 <script>
-  // Toggle sidebar visibility on button click
-  const sidebarButton = document.getElementById('sidebar-btn')
-  const sidebar = document.getElementById('sidebar')
-  const sidebarShade = document.getElementById('sidebar-shade') as HTMLElement | null
+  import { onPageLoad } from '@/lib/page-lifecycle'
 
-  if (sidebarShade) {
-    sidebarShade.addEventListener('click', () => {
-      closeSidebar()
-    })
-  }
+  onPageLoad((signal) => {
+    // Toggle sidebar visibility on button click
+    const sidebarButton = document.getElementById('sidebar-btn')
+    const sidebar = document.getElementById('sidebar')
+    const sidebarShade = document.getElementById('sidebar-shade') as HTMLElement | null
 
-  function openSidebar() {
-    if (!sidebar) return
-
-    sidebar.classList.add('show')
-    if (sidebarShade) sidebarShade.style.display = 'block'
-    sidebarButton?.setAttribute('aria-expanded', 'true')
-  }
-
-  function closeSidebar() {
-    if (!sidebar) return
-
-    sidebar.classList.remove('show')
-    if (sidebarShade) sidebarShade.style.display = 'none'
-    sidebarButton?.setAttribute('aria-expanded', 'false')
-  }
-
-  function toggleSidebar() {
-    if (sidebar?.classList.contains('show')) {
-      closeSidebar()
-    } else {
-      openSidebar()
+    if (sidebarShade) {
+      sidebarShade.addEventListener('click', () => {
+        closeSidebar()
+      })
     }
-  }
 
-  sidebar?.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement | null
-    if (target?.closest('a')) window.setTimeout(closeSidebar, 0)
-  })
+    function openSidebar() {
+      if (!sidebar) return
 
-  window.addEventListener('hashchange', closeSidebar)
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeSidebar()
-  })
+      sidebar.classList.add('show')
+      if (sidebarShade) sidebarShade.style.display = 'block'
+      sidebarButton?.setAttribute('aria-expanded', 'true')
+    }
 
-  sidebarButton?.setAttribute('aria-expanded', 'false')
-  sidebarButton?.addEventListener('click', () => {
-    toggleSidebar()
-  })
+    function closeSidebar() {
+      if (!sidebar) return
 
-  window.addEventListener('resize', () => {
-    if (window.matchMedia('(min-width: 769px)').matches) {
-      sidebar?.classList.remove('show')
+      sidebar.classList.remove('show')
       if (sidebarShade) sidebarShade.style.display = 'none'
       sidebarButton?.setAttribute('aria-expanded', 'false')
     }
+
+    function toggleSidebar() {
+      if (sidebar?.classList.contains('show')) {
+        closeSidebar()
+      } else {
+        openSidebar()
+      }
+    }
+
+    sidebar?.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement | null
+      if (target?.closest('a')) window.setTimeout(closeSidebar, 0)
+    })
+
+    window.addEventListener('hashchange', closeSidebar, { signal })
+    document.addEventListener(
+      'keydown',
+      (event) => {
+        if (event.key === 'Escape') closeSidebar()
+      },
+      { signal }
+    )
+
+    sidebarButton?.setAttribute('aria-expanded', 'false')
+    sidebarButton?.addEventListener('click', () => {
+      toggleSidebar()
+    })
+
+    window.addEventListener(
+      'resize',
+      () => {
+        if (window.matchMedia('(min-width: 769px)').matches) {
+          sidebar?.classList.remove('show')
+          if (sidebarShade) sidebarShade.style.display = 'none'
+          sidebarButton?.setAttribute('aria-expanded', 'false')
+        }
+      },
+      { signal }
+    )
   })
 </script>
 <style>

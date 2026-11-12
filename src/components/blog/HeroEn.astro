@@ -1,14 +1,13 @@
 ---
 import { Image } from 'astro:assets'
 import type { InferEntrySchema } from 'astro:content'
+import { getLangFromUrl } from '@/i18n/ui'
 
 import { PageInfo } from 'astro-pure/components/pages'
 import { Icon } from 'astro-pure/user'
 import FormattedDate from '@/components/FormattedDate.astro'
 
-// English mirror of astro-pure's Hero: identical markup/styles, but tag links
-// point to /en/tags/<tag> instead of the hardcoded /tags/<tag>, and dates format
-// in en-US rather than the site-wide zh-CN date locale.
+// Shared hero: locale-aware dates/links and ClientRouter-safe scroll behavior.
 interface Props {
   data: InferEntrySchema<'blog'>
   remarkPluginFrontmatter: Record<string, unknown>
@@ -29,6 +28,7 @@ const {
   remarkPluginFrontmatter
 } = Astro.props
 
+const lang = getLangFromUrl(Astro.url)
 const dateTimeOptions: Intl.DateTimeFormatOptions = {
   month: 'short'
 }
@@ -65,7 +65,7 @@ const dateTimeOptions: Intl.DateTimeFormatOptions = {
       <Icon name='calendar' class='size-5' />
       <FormattedDate
         class='font-sans'
-        lang='en'
+        lang={lang}
         date={publishDate}
         dateTimeOptions={dateTimeOptions}
       />
@@ -74,10 +74,10 @@ const dateTimeOptions: Intl.DateTimeFormatOptions = {
           <div class='flex items-center gap-1'>
             <span> / </span>
             <span>
-              Update
+              {lang === 'en' ? 'Update' : '更新'}
               <FormattedDate
                 class='font-sans'
-                lang='en'
+                lang={lang}
                 date={updatedDate}
                 dateTimeOptions={dateTimeOptions}
               />
@@ -110,7 +110,7 @@ const dateTimeOptions: Intl.DateTimeFormatOptions = {
               <a
                 aria-label={`View more blogs with the tag ${tag}`}
                 class='hover:underline hover:underline-offset-4'
-                href={`/en/tags/${tag}`}
+                href={`${lang === 'en' ? '/en' : ''}/tags/${tag}`}
               >
                 {tag}
               </a>
@@ -136,24 +136,32 @@ const dateTimeOptions: Intl.DateTimeFormatOptions = {
 <div class='mt-4 w-1/2 border-t max-lg:mx-auto sm:mt-6 sm:w-1/3'></div>
 
 <script>
-  const viewportHeight = window.innerHeight
-  const threshold1 = viewportHeight / 9
-  const threshold2 = (viewportHeight * 2) / 9
-  const threshold3 = (viewportHeight * 3) / 9
-  const image = document.getElementById('blurImage') as HTMLImageElement
+  import { onPageLoad } from '@/lib/page-lifecycle'
 
-  if (image) {
-    window.addEventListener('scroll', () => {
-      const scrollDistance = window.scrollY
-      if (scrollDistance >= threshold3) {
-        image.style.opacity = '0.15'
-      } else if (scrollDistance >= threshold2) {
-        image.style.opacity = '0.3'
-      } else if (scrollDistance >= threshold1) {
-        image.style.opacity = '0.45'
-      }
-    })
-  }
+  onPageLoad((signal) => {
+    const viewportHeight = window.innerHeight
+    const threshold1 = viewportHeight / 9
+    const threshold2 = (viewportHeight * 2) / 9
+    const threshold3 = (viewportHeight * 3) / 9
+    const image = document.getElementById('blurImage') as HTMLImageElement
+
+    if (image) {
+      window.addEventListener(
+        'scroll',
+        () => {
+          const scrollDistance = window.scrollY
+          if (scrollDistance >= threshold3) {
+            image.style.opacity = '0.15'
+          } else if (scrollDistance >= threshold2) {
+            image.style.opacity = '0.3'
+          } else if (scrollDistance >= threshold1) {
+            image.style.opacity = '0.45'
+          }
+        },
+        { passive: true, signal }
+      )
+    }
+  })
 </script>
 
 <style>

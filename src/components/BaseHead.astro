@@ -1,6 +1,4 @@
 ---
-// import { ClientRouter } from 'astro:transitions'
-
 import { hasEnVersion } from '@/i18n/translations'
 import { getLangFromUrl, stripLangPrefix, withLangPrefix } from '@/i18n/ui'
 import { sectionMetadata } from '@/lib/seo/metadata'
@@ -152,6 +150,3 @@ const siteGraph = {
 
 {/* Structured data — WebSite + Person (site-wide) */}
 <JsonLd schema={siteGraph} />
-
-{/* View transitions */}
-<!-- <ClientRouter /> -->

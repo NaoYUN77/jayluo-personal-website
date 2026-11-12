@@ -7,6 +7,9 @@ const { header: headerName, content: contentName, needPercent = true } = Astro.p
 <div
   class='z-10 group fixed bottom-8 end-4 transition-all flex flex-col gap-y-4 sm:end-8'
   id='action-buttons'
+  data-header={headerName}
+  data-content={contentName}
+  data-percent={needPercent}
 >
   <slot name='other-icons' />
   <button
@@ -29,69 +32,85 @@ const { header: headerName, content: contentName, needPercent = true } = Astro.p
   </button>
 </div>
 
-<script is:inline define:vars={{ headerName, contentName, needPercent }}>
-  const actionBtns = document.getElementById('action-buttons')
-  const scrollBtn = document.getElementById('to-top-btn')
-  const scrollPercentEl = scrollBtn?.querySelector('.top-text .progress-number')
-  const targetHeader = document.getElementById(headerName)
-  const articleElement = document.getElementById(contentName)
+<script>
+  import { onPageLoad } from '@/lib/page-lifecycle'
 
-  function clampPercent(value) {
-    return Math.max(0, Math.min(100, value))
-  }
+  onPageLoad((signal) => {
+    const root = document.getElementById('action-buttons')
+    if (!root) return
+    const headerName = root.dataset.header ?? ''
+    const contentName = root.dataset.content ?? ''
+    const needPercent = root.dataset.percent === 'true'
+    let observer: IntersectionObserver | undefined
 
-  function updateProgressRing(percent) {
-    const normalizedPercent = clampPercent(percent)
-    scrollBtn?.style.setProperty('--scroll-percent', normalizedPercent.toString())
-    if (scrollPercentEl) scrollPercentEl.innerText = Math.round(normalizedPercent).toString()
-  }
+    const actionBtns = document.getElementById('action-buttons')
+    const scrollBtn = document.getElementById('to-top-btn') as HTMLElement | null
+    const scrollPercentEl = scrollBtn?.querySelector<HTMLElement>('.top-text .progress-number')
+    const targetHeader = document.getElementById(headerName)
+    const articleElement = document.getElementById(contentName)
 
-  function callback(entries) {
-    entries.forEach((entry) => {
-      actionBtns?.classList.toggle('show', !entry.isIntersecting)
+    function clampPercent(value: number) {
+      return Math.max(0, Math.min(100, value))
+    }
+
+    function updateProgressRing(percent: number) {
+      const normalizedPercent = clampPercent(percent)
+      scrollBtn?.style.setProperty('--scroll-percent', normalizedPercent.toString())
+      if (scrollPercentEl) scrollPercentEl.innerText = Math.round(normalizedPercent).toString()
+    }
+
+    function callback(entries: IntersectionObserverEntry[]) {
+      entries.forEach((entry) => {
+        actionBtns?.classList.toggle('show', !entry.isIntersecting)
+      })
+    }
+
+    scrollBtn?.addEventListener('click', () => {
+      document.documentElement.scrollTo({
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+        top: 0
+      })
     })
-  }
 
-  scrollBtn?.addEventListener('click', () => {
-    document.documentElement.scrollTo({ behavior: 'smooth', top: 0 })
+    if (targetHeader) {
+      observer = new IntersectionObserver(callback)
+      observer.observe(targetHeader)
+    } else {
+      console.error(`Element with ID ${headerName} not found.`)
+    }
+
+    if (needPercent && articleElement) {
+      function calculateScrollPercent() {
+        if (!articleElement) return undefined
+        const scrollHeight = articleElement.scrollHeight
+        const articleTop = articleElement.offsetTop
+        const clientHeight = document.documentElement.clientHeight
+        const readableDistance = scrollHeight - clientHeight
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+
+        if (scrollTop < articleTop) return undefined
+        if (readableDistance <= 0) return 100
+
+        return ((scrollTop - articleTop) / readableDistance) * 100
+      }
+
+      function handleScroll() {
+        const scrollPercent = calculateScrollPercent()
+        if (scrollPercent === undefined) return
+
+        updateProgressRing(scrollPercent)
+        actionBtns?.classList.toggle('ended', scrollPercent > 100)
+      }
+
+      document.addEventListener('scroll', handleScroll, { passive: true, signal })
+      window.addEventListener('resize', handleScroll, { signal })
+      handleScroll()
+    } else {
+      actionBtns?.classList.add('ended')
+      updateProgressRing(100)
+    }
+    return () => observer?.disconnect()
   })
-
-  if (targetHeader) {
-    const observer = new IntersectionObserver(callback)
-    observer.observe(targetHeader)
-  } else {
-    console.error(`Element with ID ${headerName} not found.`)
-  }
-
-  if (needPercent && articleElement) {
-    function calculateScrollPercent() {
-      const scrollHeight = articleElement.scrollHeight
-      const articleTop = articleElement.offsetTop
-      const clientHeight = document.documentElement.clientHeight
-      const readableDistance = scrollHeight - clientHeight
-      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-
-      if (scrollTop < articleTop) return undefined
-      if (readableDistance <= 0) return 100
-
-      return ((scrollTop - articleTop) / readableDistance) * 100
-    }
-
-    function handleScroll() {
-      const scrollPercent = calculateScrollPercent()
-      if (scrollPercent === undefined) return
-
-      updateProgressRing(scrollPercent)
-      actionBtns?.classList.toggle('ended', scrollPercent > 100)
-    }
-
-    document.addEventListener('scroll', handleScroll, { passive: true })
-    window.addEventListener('resize', handleScroll)
-    handleScroll()
-  } else {
-    actionBtns?.classList.add('ended')
-    updateProgressRing(100)
-  }
 </script>
 
 <style>

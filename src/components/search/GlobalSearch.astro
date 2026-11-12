@@ -123,6 +123,9 @@ const copy = isEn
     }
 
     disconnectedCallback() {
+      if (this.dialog?.open) document.documentElement.style.overflow = this.previousOverflow
+      clearTimeout(this.timer)
+      this.request?.abort()
       document.removeEventListener('click', this.handleDocumentClick)
       document.removeEventListener('keydown', this.handleDocumentKeydown)
       this.input?.removeEventListener('input', this.handleInput)

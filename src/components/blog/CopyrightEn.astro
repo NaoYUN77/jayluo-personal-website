@@ -1,15 +1,14 @@
 ---
 import type { CollectionEntry } from 'astro:content'
 import { formatDate } from '@/i18n/date'
+import { getLangFromUrl } from '@/i18n/ui'
 import config from 'virtual:config'
 
 import { QRCode } from 'astro-pure/advanced'
 import { Icon } from 'astro-pure/user'
 import { cn } from 'astro-pure/utils'
 
-// English mirror of astro-pure's Copyright: identical markup/styles, but the
-// publish date formats in en-US instead of the site-wide zh-CN date locale
-// (astro-pure's `getFormattedDate` reads a single global `locale.dateLocale`).
+// Shared copyright controls rebind after each ClientRouter navigation.
 interface Props {
   data: CollectionEntry<'blog' | 'blogEn'>['data']
   class?: string
@@ -20,6 +19,7 @@ const {
   class: className
 } = Astro.props
 
+const lang = getLangFromUrl(Astro.url)
 const image = typeof heroImage?.src === 'string' ? heroImage?.src : (heroImage?.src?.src ?? '')
 
 const shares = {
@@ -52,21 +52,21 @@ const shares = {
   {/* common info */}
   <div class='flex flex-row flex-wrap justify-start gap-x-5 gap-y-1 sm:gap-x-8'>
     <div class='flex gap-x-2 sm:flex-col'>
-      <span>Author</span>
+      <span>{lang === 'en' ? 'Author' : '作者'}</span>
       <span class='text-sm text-foreground max-sm:place-self-center'>{config.author}</span>
     </div>
     {
       publishDate && (
         <div class='flex gap-x-2 sm:min-w-16 sm:flex-col'>
-          <span>Published at</span>
+          <span>{lang === 'en' ? 'Published at' : '发布于'}</span>
           <span class='text-sm text-foreground max-sm:place-self-center'>
-            {formatDate(publishDate, 'en', { month: 'long' })}
+            {formatDate(publishDate, lang, { month: 'long' })}
           </span>
         </div>
       )
     }
     <div class='flex gap-x-2 sm:flex-col'>
-      <span>Copyright</span>
+      <span>{lang === 'en' ? 'Copyright' : '版权'}</span>
       <a
         class='text-sm text-foreground max-sm:place-self-center'
         href='https://creativecommons.org/licenses/by/4.0/'
@@ -116,35 +116,39 @@ const shares = {
 
 <div class='mx-6 rounded-b-xl border border-t-0 px-3 pb-1.5 pt-1 sm:mx-8 sm:px-4'>
   <a
-    href='/en/projects#sponsorship'
+    href={`${lang === 'en' ? '/en' : ''}/projects#sponsorship`}
     class='flex items-center justify-between text-muted-foreground no-underline'
     target='_blank'
   >
-    <span>Buy me a cup of coffee ☕.</span>
+    <span>{lang === 'en' ? 'Buy me a cup of coffee ☕.' : '请我喝杯咖啡 ☕。'}</span>
     <Icon class='box-content size-5 p-1' name='receive-money' />
   </a>
 </div>
 
 <script>
+  import { onPageLoad } from '@/lib/page-lifecycle'
+
   import { showToast } from 'astro-pure/utils'
 
-  // Copy link
-  const copyLink = document.getElementById('copy-link')
-  copyLink?.addEventListener('click', () => {
-    navigator.clipboard.writeText(window.location.href)
-    // Show toast
-    showToast({ message: 'Link copied!' })
-  })
+  onPageLoad((_signal) => {
+    // Copy link
+    const copyLink = document.getElementById('copy-link')
+    copyLink?.addEventListener('click', () => {
+      navigator.clipboard.writeText(window.location.href)
+      // Show toast
+      showToast({ message: 'Link copied!' })
+    })
 
-  // QRCode
-  const getQRCode = document.getElementById('get-qrcode')
-  const qrcodeContainer = document.getElementById('qrcode-container')
-  if (!qrcodeContainer) throw new Error('qrcode container not found')
-  getQRCode?.addEventListener('click', () => {
-    if (qrcodeContainer.ariaExpanded === 'true') {
-      qrcodeContainer.ariaExpanded = 'false'
-    } else {
-      qrcodeContainer.ariaExpanded = 'true'
-    }
+    // QRCode
+    const getQRCode = document.getElementById('get-qrcode')
+    const qrcodeContainer = document.getElementById('qrcode-container')
+    if (!qrcodeContainer) return
+    getQRCode?.addEventListener('click', () => {
+      if (qrcodeContainer.ariaExpanded === 'true') {
+        qrcodeContainer.ariaExpanded = 'false'
+      } else {
+        qrcodeContainer.ariaExpanded = 'true'
+      }
+    })
   })
 </script>
