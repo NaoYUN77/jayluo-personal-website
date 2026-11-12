@@ -543,3 +543,13 @@ html:root .site-search-field input:focus-visible {
 html:root #headerExpandContent {
   transition: none;
 }
+
+/* Text-only note metadata follows the site's square pixel treatment. */
+.note-badge {
+  display: inline-block;
+  border: 2px solid currentColor;
+  border-radius: 0;
+  padding: 0.125rem 0.5rem;
+  font-family: var(--pixel-body);
+  line-height: 1.5;
+}

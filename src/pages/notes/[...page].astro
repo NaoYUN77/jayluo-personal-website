@@ -7,12 +7,15 @@
 import type { GetStaticPaths, Page } from 'astro'
 import type { CollectionEntry } from 'astro:content'
 import { getCollection } from 'astro:content'
+import { noteLabels } from '@/i18n/notes'
 import { listingMetadata } from '@/lib/seo/metadata'
 
 import { Paginator } from 'astro-pure/components/pages'
 import { Button, Icon } from 'astro-pure/user'
 import PageLayout from '@/layouts/BaseLayout.astro'
 import PageInfo from '@/components/comment/PageInfo.astro'
+
+const { types: typeLabels, statuses: statusLabels } = noteLabels.zh
 
 export const prerender = true
 
@@ -67,22 +70,6 @@ const paginationProps = {
   })
 }
 
-const typeLabels: Record<string, string> = {
-  note: '笔记',
-  snippet: '片段',
-  draft: '草稿',
-  idea: '想法',
-  research: '研究',
-  reference: '参考'
-}
-
-const statusLabels: Record<string, string> = {
-  'in-progress': '进行中',
-  incomplete: '待补充',
-  ready: '已整理',
-  archived: '已归档'
-}
-
 const statusColors: Record<string, string> = {
   'in-progress': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
   incomplete: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
@@ -113,9 +100,6 @@ const typeColors: Record<string, string> = {
   <main class='mt-6 lg:mt-10'>
     <div id='content-header' class='animate'>
       <div class='mb-3 flex items-center gap-3'>
-        <div class='rounded-lg bg-muted/50 p-3'>
-          <span class='text-2xl'>📒</span>
-        </div>
         <div>
           <h1 class='text-3xl font-medium'>Notes</h1>
           <p class='text-sm text-muted-foreground'>一手笔记 · 持续生长中</p>
@@ -165,9 +149,7 @@ const typeColors: Record<string, string> = {
                         )}
 
                         <div class='flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-muted-foreground'>
-                          <span
-                            class={`rounded-md px-2 py-0.5 font-medium ${typeColors[entry.data.type]}`}
-                          >
+                          <span class={`note-badge font-medium ${typeColors[entry.data.type]}`}>
                             {typeLabels[entry.data.type] || entry.data.type}
                           </span>
                           <span>·</span>
@@ -208,7 +190,7 @@ const typeColors: Record<string, string> = {
                       </div>
 
                       <span
-                        class={`mt-0.5 shrink-0 rounded-md px-2 py-1 text-xs font-medium ${statusColors[entry.data.status]}`}
+                        class={`note-badge mt-0.5 shrink-0 text-xs font-medium ${statusColors[entry.data.status]}`}
                       >
                         {statusLabels[entry.data.status]}
                       </span>

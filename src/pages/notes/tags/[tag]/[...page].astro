@@ -6,11 +6,14 @@
 import type { GetStaticPaths, Page } from 'astro'
 import type { CollectionEntry } from 'astro:content'
 import { getCollection } from 'astro:content'
+import { noteLabels } from '@/i18n/notes'
 import { listingMetadata } from '@/lib/seo/metadata'
 
 import { Paginator } from 'astro-pure/components/pages'
 import { Button, Icon } from 'astro-pure/user'
 import PageLayout from '@/layouts/BaseLayout.astro'
+
+const { statuses: statusLabels } = noteLabels.zh
 
 export const prerender = true
 
@@ -37,13 +40,6 @@ interface Props {
 
 const { page } = Astro.props as unknown as Props
 const { tag } = Astro.params
-
-const statusLabels: Record<string, string> = {
-  'in-progress': '🚧 In Progress',
-  incomplete: '⏸️ Needs more',
-  ready: '✅ Ready',
-  archived: '📦 Archived'
-}
 
 const statusColors: Record<string, string> = {
   'in-progress': 'text-blue-600 dark:text-blue-400',
@@ -98,27 +94,16 @@ const paginationProps = {
             <li class='glass-surface glass-interactive group relative rounded-lg p-4'>
               <a href={`/notes/${entry.id}`} class='block' data-astro-prefetch>
                 <div class='mb-2 flex items-start gap-3'>
-                  <div class='mt-0.5 shrink-0 text-xl opacity-70 group-hover:opacity-100'>
-                    {entry.data.type === 'note' && '📝'}
-                    {entry.data.type === 'snippet' && '💡'}
-                    {entry.data.type === 'draft' && '✏️'}
-                    {entry.data.type === 'idea' && '🔮'}
-                    {entry.data.type === 'research' && '🔬'}
-                    {entry.data.type === 'reference' && '📚'}
-                  </div>
                   <div class='min-w-0 flex-1'>
                     <div class='mb-1 flex items-start justify-between gap-4'>
                       <h3 class='font-medium leading-tight group-hover:text-foreground'>
                         {entry.data.title}
                       </h3>
                       <span
-                        class={`shrink-0 text-xs ${statusColors[entry.data.status]}`}
+                        class={`note-badge shrink-0 text-xs ${statusColors[entry.data.status]}`}
                         title={statusLabels[entry.data.status]}
                       >
-                        {entry.data.status === 'in-progress' && '🚧'}
-                        {entry.data.status === 'incomplete' && '⏸️'}
-                        {entry.data.status === 'ready' && '✅'}
-                        {entry.data.status === 'archived' && '📦'}
+                        {statusLabels[entry.data.status] || entry.data.status}
                       </span>
                     </div>
                     {entry.data.description && (

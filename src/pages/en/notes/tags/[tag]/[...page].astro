@@ -1,11 +1,14 @@
 ---
 import type { GetStaticPaths, Page } from 'astro'
 import { getCollection, type CollectionEntry } from 'astro:content'
+import { noteLabels } from '@/i18n/notes'
 import { listingMetadata } from '@/lib/seo/metadata'
 
 import { Paginator } from 'astro-pure/components/pages'
 import { Button, Icon } from 'astro-pure/user'
 import PageLayout from '@/layouts/BaseLayout.astro'
+
+const { statuses: statusLabels } = noteLabels.en
 
 export const prerender = true
 
@@ -33,22 +36,6 @@ interface Props {
 
 const { page } = Astro.props
 const { tag } = Astro.params
-
-const statusIcons: Record<string, string> = {
-  'in-progress': '🚧',
-  incomplete: '⏸️',
-  ready: '✅',
-  archived: '📦'
-}
-
-const typeIcons: Record<string, string> = {
-  note: '📝',
-  snippet: '💡',
-  draft: '✏️',
-  idea: '🔮',
-  research: '🔬',
-  reference: '📚'
-}
 
 const meta = listingMetadata(
   'notes',
@@ -96,15 +83,14 @@ const paginationProps = {
             <li class='glass-surface glass-interactive group relative rounded-lg p-4'>
               <a href={`/en/notes/${entry.data.translationKey}`} class='block' data-astro-prefetch>
                 <div class='mb-2 flex items-start gap-3'>
-                  <div class='mt-0.5 shrink-0 text-xl opacity-70 group-hover:opacity-100'>
-                    {typeIcons[entry.data.type] ?? '📝'}
-                  </div>
                   <div class='min-w-0 flex-1'>
                     <div class='mb-1 flex items-start justify-between gap-4'>
                       <h3 class='font-medium leading-tight group-hover:text-foreground'>
                         {entry.data.title}
                       </h3>
-                      <span class='shrink-0 text-xs'>{statusIcons[entry.data.status]}</span>
+                      <span class='note-badge shrink-0 text-xs'>
+                        {statusLabels[entry.data.status] || entry.data.status}
+                      </span>
                     </div>
                     {entry.data.description && (
                       <p class='mb-2 text-sm text-muted-foreground'>{entry.data.description}</p>
