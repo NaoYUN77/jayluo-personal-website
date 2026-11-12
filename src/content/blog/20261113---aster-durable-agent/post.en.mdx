@@ -1,0 +1,111 @@
+---
+title: 'One Hub per Person: Aster, a Multi-User Slack Assistant'
+description: Aster lives in Slack, with a separate Hub per person. Memory and tools are isolated by conversations and directories, not prompts.
+publishDate: 2026-11-13
+tags: ['Aster', 'AI Agent', 'engineering', 'Slack']
+language: en
+translationKey: '20261113---aster-durable-agent/post'
+---
+
+## I didn't want another chat window
+
+Over the past three weeks I've been building an assistant called Aster. It runs on a small Tencent Cloud server. It started as a private Telegram bot: one person, one conversation, one memory. Pretty soon I hooked it up to Slack, and Slack is its interface now. I can use it in a DM, and members of allowlisted channels can @ it with a question and keep asking follow-ups under its reply. Each person has their own Hub, with a separate conversation, memory, and toolset. If the process gets killed, Aster recovers from the state it wrote to disk and picks up whatever it hadn't finished.
+
+The code is on [GitHub](https://github.com/NaoYUN77/Aster). It's built on `pi-durable`, runs on Node.js, keeps its state in SQLite, and ships to production as a single Docker container. It's been running on that machine continuously.
+
+What I wanted wasn't one more chat window. I wanted an assistant that could run overnight: parked on a small headless machine, with no inbound ports exposed, a process that occasionally gets killed, and me as the only person on call. Now there's one more constraint: in a channel, everyone's context can't get mixed together. Those constraints ended up deciding almost every technical choice.
+
+## How a message gets through
+
+The path a message takes through Aster now starts in Slack:
+
+```text
+Slack Socket Mode
+  → inbound policy (allowlist; identity comes only from event.user)
+  → an @ question in a channel, or a follow-up in a reply thread
+  → write to the inbox first (with the thread anchor), then ack
+  → route to this person's conversation
+       owner          → root Hub
+       member         → their own Hub
+       thread reply   → a fork of that Hub
+  → use this Hub's memory
+  → call the model, run this Hub's toolset
+  → write the reply to disk first, then send it back in chunks to the same thread
+```
+
+Events come in over Socket Mode, an outbound long-lived connection, so the container never has to open an entry point to the internet. Who can drive the bot and which channels it answers in are set in the startup config; an event can't grant itself more permissions. Identity comes only from the `event.user` that Slack sends, and nothing in a message body can change who the sender is. DMs serve only me. In a channel, a new conversation starts only with an @; stray messages don't count. A follow-up inside an existing reply thread doesn't need another @, and the answer goes back to the same thread.
+
+Two parts are a little counterintuitive.
+
+First, requests are serial. Aster handles one at a time, and Hubs don't run in parallel either. Tools within a turn run in order too, so reads and writes on shared directories never interleave. A single request can wait at most five minutes; after that Aster asks the runtime to cancel it, though external side effects aren't guaranteed to be undone. The data directory is also locked with `flock`, so only one process can use it.
+
+Second, a failed delivery doesn't rerun the agent. Messages sent to Slack don't have an idempotency key I can use, so a timeout might mean the message never went out, or that the other side already got it. Chunks with an unknown outcome are never resent automatically. I look at the channel history and choose either "send again" or "treat as delivered." Missing a message, or occasionally sending one twice, is more acceptable than rerunning tool calls that already happened.
+
+## Isolation doesn't come from prompts
+
+Putting everyone in one conversation and writing "don't read other people's stuff" in the prompt isn't reliable, in my view. A prompt injection can impersonate someone, and once `memory_search` turns up my daily notes or my profile, the isolation is only a polite request. So Aster's isolation is structural, not verbal.
+
+The first time someone is allowed in, they get their own Hub. The member ID comes from the transport layer, and directories are derived from that ID. If the conversation is ever rebuilt, the memory and files still follow the person, not a particular conversation number.
+
+- The conversation is a separate pi-durable Conversation.
+- The working directory is `workspace/members/<memberId>`. Mine is still `workspace/`.
+- The memory root is `memory/members/<memberId>`. Mine is still `memory/daily`.
+- The tool policy is fixed with `tools.remove` when the conversation is created, and later requests can't loosen it.
+
+The memory layer especially can't be vague. There's still only one set of memory tools in the whole process, but the store is resolved per conversation. A Hub and its thread forks are registered to the same person's root, so child conversations can read that person's long-term memory. An unregistered conversation fails outright and never falls back to someone else's store, or mine. Members can't see each other's daily notes or profiles, and they can't see mine.
+
+The toolset is split per Hub too, and what gets taken away is the capability, not just the name. Members don't get `bash` or `powershell`: they're the same shell capability, so renaming it for a different host doesn't let it stay. Members don't get the reminder tool either, because the reminder's target chat is fixed by the host and currently always points to my conversation, so handing it out would just send reminders to the wrong person. Skills are host-side procedures and are only available in my Hub. A tool removed at creation is simply something the model can't call.
+
+Members aren't left with nothing. They can use the memory tools to recall what they asked before, work with files in their own working directory, and use the web tools and connected MCP servers. If the browser or emoji reactions are deployed, those show up in members' Hubs as well. My own root Hub keeps the full toolset and has no turn limit.
+
+A thread is a fork of the Hub, not a brand-new person. A follow-up continues from the bot's reply, and the tool policy, instructions, and memory store are inherited verbatim. A thread gets at most five turns. When it hits the limit, the host writes an excerpt of the fork's own turns back to the Hub (without another model call), closes the fork, and adds a note: "This question has looped too many times, please don't reply again." After that, the thread no longer reaches the model. A new @ question forks fresh from the Hub and continues from that person's existing history and long-term memory. Information flows upward: a fork can read the Hub's long-term memory, while the Hub only sees what was settled in a thread through that bounded excerpt.
+
+There are gaps in this isolation that I left on purpose. If a member points `read`, `write`, or `edit` at an absolute path, they could in theory reach files in the data directory that aren't theirs, and the web tools are still available. The working assumption right now is that everyone who gets onto the allowlist is trusted. Locking the filesystem down per Hub is the next step, not something that's already done.
+
+## Every Hub has its own layered memory
+
+Isolation answers whose memory something goes into. Inside each Hub, context is still split into three parts, so the assistant can keep working across turns and across days while keeping input size and prefix changes under control:
+
+- **A: stable rules.** The system prompt and tool declarations. These stay as unchanged as possible so the model provider's prefix cache can kick in.
+- **B: periodic snapshot.** A continuity summary plus this Hub's working baseline. It switches only when a compaction or reset actually takes effect.
+- **C: live tail.** Recent raw messages, tool results, and whatever was retrieved this turn.
+
+```text
+request n     A | B7 | T1 ... Tn
+request n+1   A | B7 | T1 ... Tn | Tn+1
+compaction    A | B8 | recent turns kept ...
+```
+
+When Aster first learned to hold a conversation, long-term facts lived in a single `workspace/MEMORY.md`. Once layered memory was in, the same kind of fact had two channels, and the model had to pick which one to write to. So I retired that file: the app no longer creates it or asks the model to read or write it. The old file on disk is left as is; it's just no longer used. Now standing goals, constraints, and preferences go into the Hub's working memory, and past facts are retrieved from its own daily archive with `memory_search`.
+
+I didn't split it this way just to make the structure look neat. I ran a follow-up test on that Tencent Cloud machine, which has 4 cores and 7680 MB of memory (the design doc assumes 4 GB; the test machine is one size up). Peak RSS was about 136 MiB, nowhere near 4 GB. I ran ten rounds of Chinese conversation with DeepSeek through the real integration path. Out of 28 calls, 27 hit the provider's prefix cache, about 87%. The only miss was the call right after a prefix change, which matches what you'd expect when compaction switches to a new period. That's one DeepSeek test, not a promise that every model behaves this way.
+
+The mechanism worked, but I still hit walls on quality. For a while the model kept calling `working_update` and kept getting rejected with "evidence entry is not in the current conversation." The root cause was simple: entry IDs never appeared in the transcript the model could see, so it had to guess, and the arguments often said `evidence: [1]`. I changed `working_read` to list the real IDs of the most recent user entries, and validation failures now include the same list. Summaries and archives also made up years that were never given, and a single diary entry would sometimes contradict itself, so I added a rule to the prompt: any year, month, or day that isn't in the original text must not be invented or filled in.
+
+There's one bug I haven't fixed yet. If the reply has already been written to disk but the process is killed before the end-of-turn counter runs, that turn is permanently undercounted. The reply itself is complete; the compaction checkpoint just moves back by one turn. The user profile is still in an observation phase: it's kept in that Hub's working memory and extracted from its own daily archive, without an extra model call.
+
+## Integration choices on a headless machine
+
+Aster runs on a headless Tencent Cloud machine, with no browser and no GUI. Plenty of the "officially recommended" ways to integrate things just don't apply there.
+
+The channel was the first question. Socket Mode brings Slack events in over an outbound connection, so the container doesn't need an inbound port. On this machine, `slack.com` and `wss-primary.slack.com` are reachable directly, and outbound traffic can still go through a MITM proxy when needed. Back in the Telegram days I also had to worry about not reaching `api.telegram.org` directly. The interface has changed, but the rule of not opening inbound ports hasn't.
+
+MCP was the second. Local stdio plus a token is the default route: Aster starts the process, credentials come from environment variables, and no browser is needed. I didn't drop remote OAuth, but the authorization doesn't happen on the server. I run `mcp:auth` somewhere that has a browser and then deploy the token file, or tunnel the callback back to the server over SSH. I tested this once against Notion's hosted MCP. Everything worked until the token exchange, where the other side returned a 502. I later concluded it was an outage on their end, so that check is on hold.
+
+Secret management hit a wall once too. I had integrated an Agent Vault and an egress router, using Infisical cloud, and this machine in mainland China simply couldn't reach it, so that injection chain was never actually turned on. Rather than maintain a subsystem that was off by default, I deleted the whole thing. Credentials now live in restricted environment variables, and the app only checks that they exist and have the right shape. Later, outbound HTTPS could go through OpenBao's MITM proxy, so the app process only ever sees placeholders. The browser's debugging port is bound only to loopback on another machine and is reached through an SSH key that can forward but can't get a shell. GitHub webhooks go to a Cloudflare Worker first, and the app long-polls to pull them. The container has never exposed an inbound port.
+
+## Things I added, and things I removed
+
+Not every capability I built belongs in the main assistant.
+
+From late October to early November I did a fairly deep round of work on remote execution: a host-side broker, a resident RPC, script-style tool entry points, and a remote sandbox. To be clear, `pi-durable`'s Sessions, checkpoints, and replay were there the whole time. That's the foundation that lets the assistant run overnight, and it wasn't touched. What got removed was a separate remote execution and sandbox setup. Once that standalone deployment was archived, I tore the related code and orchestration out of the main repo, and the main assistant went back to a single container. More features doesn't mean a stronger assistant on this machine.
+
+The choices that stayed follow the same logic. State lives in Node's built-in SQLite and daily Markdown files, with no separate database or vector service. Each Hub adds one conversation and one diary, which is an acceptable cost and not a reason to change storage. Tool retrieval uses BM25 for now; semantic retrieval waits until there's a real signal. With so few tools, adding another dependency on an overseas or local embedding service isn't worth it for a one-person operation. One-off reminders are their own SQLite state machine, scheduled in the same process, with the target chat fixed by the host. Reminders that come due while the app is down don't go out at the time; they're sent after recovery and may be later than scheduled. These are all costs I accepted on purpose.
+
+## Write what matters to disk first
+
+What Aster can do now is worth spelling out, and so is what it deliberately doesn't do. Requests are serial. Even with several Hubs active in a channel, they don't run in parallel, and when it's busy, messages wait on the Slack side. `bash` isn't a sandbox and only appears in my own Hub. Members' file tools aren't locked to their directories yet. CI covers type checking, offline tests, and the image boundary, but not the full business path from Slack to the model to delivery. These aren't things I haven't gotten around to writing; they're the current boundaries.
+
+Next, I'd like to write separately about lazy-loading skills, and what it's like once event tracing is actually running. Those deserve their own posts.
+
+If you're building an assistant that a lot of people will share, feel free to go straight to the repo. There are only two things I want to make clear. Per-person isolation comes from conversations, directories, and toolsets, not from prompts. And write the state that matters to disk first, before you deal with an unreliable network and a process that might get killed.
