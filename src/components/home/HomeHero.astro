@@ -1,6 +1,10 @@
 ---
+import { getCollection, type CollectionEntry } from 'astro:content'
+import { makeGhostHeroLines } from '@/data/ghost-lines'
+import { getProjects } from '@/data/projects'
 import type { Lang } from '@/i18n/ui'
 
+import { getBlogCollection } from 'astro-pure/server'
 import VirtualMascot from '@/components/home/VirtualMascot.astro'
 
 interface Props {
@@ -13,6 +17,30 @@ const labels = isEn
   : ['博客', '笔记', '项目', '关于', '联系']
 const paths = ['blog', 'notes', 'projects', 'about', 'contact']
 const prefix = isEn ? '/en' : ''
+const entries = (await getBlogCollection(isEn ? 'blogEn' : 'blog')) as CollectionEntry<
+  'blog' | 'blogEn'
+>[]
+const posts = entries
+  .filter((post) => !post.data.draft && (!isEn || post.data.translationKey))
+  .sort(
+    (a, b) =>
+      +(b.data.updatedDate ?? b.data.publishDate) - +(a.data.updatedDate ?? a.data.publishDate)
+  )
+const notes = (await getCollection(isEn ? 'notesEn' : 'notes')).filter(
+  (note) => !note.data.draft && (!isEn || note.data.translationKey)
+)
+const latest = posts[0]
+const heroLines = makeGhostHeroLines(lang, {
+  latest: latest
+    ? {
+        title: latest.data.title,
+        href: `${prefix}/blog/${isEn ? latest.data.translationKey : latest.id}`
+      }
+    : undefined,
+  posts: posts.length,
+  notes: notes.length,
+  projects: getProjects(lang).length
+})
 ---
 
 <section class='title-screen pixel-frame' aria-labelledby='title-screen-heading'>
@@ -39,8 +67,8 @@ const prefix = isEn ? '/en' : ''
     </nav>
     <span class='press-start' aria-hidden='true'>PRESS START</span>
   </div>
-  <div class='title-screen-pet' data-ghost-dock>
-    <VirtualMascot lang={lang} />
+  <div class='title-screen-pet' data-ghost-dock data-hero-lines={JSON.stringify(heroLines)}>
+    <VirtualMascot lang={lang} {heroLines} />
   </div>
 </section>
 

@@ -1,10 +1,12 @@
 ---
+import { ghostQuietLabel, type HeroLine } from '@/data/ghost-lines'
 import type { Lang } from '@/i18n/ui'
 
 interface Props {
   lang: Lang
+  heroLines?: HeroLine[]
 }
-const { lang } = Astro.props
+const { lang, heroLines } = Astro.props
 const label = lang === 'en' ? 'Boo, the pixel ghost' : 'Boo，像素小幽灵'
 // Reference: ghost-pixels.py, 16×16 frames A and B.
 const frameA = [
@@ -41,7 +43,13 @@ const pixels = (rows: string[], offset = 0) =>
   )
 ---
 
-<div class='ghost-pet' data-ghost-pet data-lang={lang} transition:persist='pixel-ghost'>
+<div
+  class='ghost-pet'
+  data-ghost-pet
+  data-lang={lang}
+  data-hero-mode={String(!!heroLines)}
+  transition:persist='pixel-ghost'
+>
   <button class='pixel-mascot' type='button' aria-label={label} title={label}>
     <svg viewBox='-2 -3 20 22' aria-hidden='true' shape-rendering='crispEdges'>
       <g class='ghost-action'>
@@ -81,7 +89,12 @@ const pixels = (rows: string[], offset = 0) =>
     </svg>
     <span class='ghost-z' aria-hidden='true'>Z</span>
   </button>
-  <span class='ghost-speech' data-ghost-speech aria-hidden='true'></span>
+  <div class='ghost-speech' data-ghost-bubble>
+    <a class='ghost-line' data-ghost-speech href={heroLines?.[0]?.href}
+      >{heroLines?.[0]?.text ?? ''}</a
+    >
+    <button type='button' class='ghost-quiet' data-ghost-quiet>{ghostQuietLabel[lang]}</button>
+  </div>
   <span class='sr-only' data-ghost-live role='status' aria-live='polite' aria-atomic='true'></span>
 </div>
 
@@ -96,9 +109,9 @@ const pixels = (rows: string[], offset = 0) =>
     --bubble-bg: #fff;
     --bubble-fg: #212529;
     position: fixed;
-    left: max(12px, env(safe-area-inset-left));
-    bottom: max(16px, env(safe-area-inset-bottom));
-    width: 80px;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(112px, env(safe-area-inset-bottom));
+    width: 100px;
     z-index: 25;
     pointer-events: none;
   }
@@ -110,13 +123,14 @@ const pixels = (rows: string[], offset = 0) =>
     border: 0;
     background: transparent;
     cursor: pointer;
-    pointer-events: auto;
+    pointer-events: none;
   }
   .pixel-mascot:focus-visible {
     outline: 4px solid hsl(var(--primary));
     outline-offset: 4px;
   }
   svg {
+    pointer-events: visiblePainted;
     width: 100%;
     overflow: visible;
   }
@@ -189,7 +203,7 @@ const pixels = (rows: string[], offset = 0) =>
   .ghost-speech {
     position: absolute;
     bottom: calc(100% + 16px);
-    left: 8px;
+    right: 8px;
     width: max-content;
     max-width: min(280px, calc(100vw - 40px));
     padding: 12px 16px;
@@ -210,18 +224,21 @@ const pixels = (rows: string[], offset = 0) =>
       4px -4px 0 var(--bubble-fg),
       -4px -4px 0 var(--bubble-fg);
     font-family: var(--pixel-body);
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1.6;
     overflow-wrap: anywhere;
     opacity: 0;
+    visibility: hidden;
   }
-  .is-speaking .ghost-speech {
+  .is-speaking .ghost-speech,
+  .ghost-pet[data-hero-mode='true'] .ghost-speech {
+    visibility: visible;
     opacity: 1;
   }
   .ghost-speech::after {
     content: '';
     position: absolute;
-    left: 24px;
+    right: 24px;
     bottom: -20px;
     width: 16px;
     height: 16px;
@@ -230,25 +247,120 @@ const pixels = (rows: string[], offset = 0) =>
     border-bottom: 4px solid var(--bubble-fg);
     box-shadow: 4px 0 0 var(--bubble-fg);
   }
-  :global([data-ghost-dock]) .ghost-pet {
+  .ghost-line[href],
+  .ghost-quiet {
+    pointer-events: auto;
+  }
+  .ghost-line[href] {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .ghost-quiet {
+    display: block;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 12px;
+    min-height: 32px;
+    padding: 6px 0 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .ghost-quiet[hidden] {
+    display: none;
+  }
+  .is-positioned {
+    left: var(--ghost-x);
+    top: var(--ghost-y);
+    right: auto;
+    bottom: auto;
+  }
+  .is-roaming {
+    transition:
+      left 2s linear,
+      top 2s linear;
+  }
+  .is-looking .ghost-eyes {
+    animation: look 800ms steps(1, end) 2;
+  }
+  .is-cameo[data-cameo='title'] .pixel-mascot {
+    clip-path: inset(0 0 25%);
+  }
+  :global(.boot-running) .ghost-pet .ghost-speech {
+    visibility: hidden !important;
+  }
+  .hide-bubble .ghost-speech {
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .is-cameo[data-cameo='image'] .ghost-body {
+    animation: none;
+    transform-origin: 8px 1px;
+    transform: rotate(8deg);
+  }
+  .is-cameo[data-cameo='end'] .ghost-body {
+    animation: none;
+    transform-origin: 8px 16px;
+    transform: scaleY(0.8);
+  }
+  .is-obstructed {
+    visibility: hidden;
+  }
+  .is-obstructed .ghost-speech {
+    visibility: hidden !important;
+  }
+  .is-obstructed svg {
+    pointer-events: none;
+  }
+  .is-obstructed .pixel-mascot {
+    pointer-events: none;
+  }
+  .ghost-pet[data-hero-mode='true'] {
     position: relative;
     left: auto;
+    right: auto;
+    top: auto;
     bottom: auto;
-    width: 220px;
+    width: 100%;
     max-width: 100%;
     z-index: 1;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 32px;
+    min-height: 400px;
   }
-  :global([data-ghost-dock]) .ghost-speech {
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: min(320px, calc(100vw - 100px));
+  .ghost-pet[data-hero-mode='true'] .pixel-mascot {
+    grid-row: 2;
+    width: 220px;
+    max-width: 100%;
   }
-  :global([data-ghost-dock]) .ghost-speech::after {
+  .ghost-pet[data-hero-mode='true'] .ghost-speech {
+    grid-row: 1;
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    width: 70%;
+    min-height: 110px;
+    max-width: 100%;
+    pointer-events: auto;
+  }
+  .ghost-pet[data-hero-mode='true'] .ghost-speech::after {
     left: calc(50% - 10px);
+    right: auto;
   }
-  @media (max-width: 640px) {
-    :global([data-ghost-dock]) .ghost-pet {
-      width: 140px;
+  @keyframes look {
+    25% {
+      transform: translateX(-1px);
+    }
+    75% {
+      transform: translateX(1px);
+    }
+  }
+  @media (max-width: 1024px) {
+    .ghost-pet {
+      width: 80px;
     }
   }
   @keyframes float {
@@ -304,12 +416,33 @@ const pixels = (rows: string[], offset = 0) =>
       padding-bottom: calc(72px + env(safe-area-inset-bottom));
     }
     .ghost-pet {
-      width: 48px;
-      left: max(4px, env(safe-area-inset-left));
-      bottom: max(8px, env(safe-area-inset-bottom));
+      width: 60px;
+      right: max(8px, env(safe-area-inset-right));
+      bottom: max(112px, env(safe-area-inset-bottom));
+    }
+  }
+  @media (max-width: 640px) {
+    .ghost-speech {
+      font-size: 16px;
+    }
+    .ghost-quiet {
+      min-height: 44px;
+    }
+    .ghost-pet[data-hero-mode='true'] {
+      min-height: 340px;
+    }
+    .ghost-pet[data-hero-mode='true'] .pixel-mascot {
+      width: 160px;
+    }
+    .ghost-pet[data-hero-mode='true'] .ghost-speech {
+      width: calc(100% - 16px);
+      min-height: 110px;
     }
   }
   @media (prefers-reduced-motion: reduce) {
+    .is-roaming {
+      transition: none;
+    }
     .ghost-pet *,
     .pixel-mascot:is(:hover, :focus-visible) .ghost-action {
       animation: none !important;

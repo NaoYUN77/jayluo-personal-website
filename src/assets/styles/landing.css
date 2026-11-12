@@ -79,7 +79,7 @@ html:root .title-screen h1 {
   display: grid;
   align-content: center;
   justify-items: center;
-  padding-top: 90px;
+  padding-block: 0;
 }
 .landing-section {
   margin-top: 40px;
@@ -325,7 +325,7 @@ html:root .notes-ticker h2 {
     font-size: 16px;
   }
   .title-screen-pet {
-    padding-top: 100px;
+    padding-top: 32px;
     padding-bottom: 8px;
   }
   .cartridge-grid {
