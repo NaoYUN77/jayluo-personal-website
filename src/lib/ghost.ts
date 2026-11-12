@@ -132,7 +132,7 @@ export function initGhost() {
   const pageLoad = () => {
     const previousLang = lang
     lang = location.pathname.match(/^\/en(?:\/|$)/) ? 'en' : 'zh'
-    const label = lang === 'en' ? 'pixel ghost' : '像素小幽灵'
+    const label = lang === 'en' ? 'Boo, the pixel ghost' : 'Boo，像素小幽灵'
     button.setAttribute('aria-label', label)
     button.title = label
     pet.dataset.lang = lang
@@ -156,6 +156,7 @@ export function initGhost() {
     }
     if (document.body.dataset.pageKind === '404') say('missing')
     else if (/^\/(?:en\/)?projects\/?$/.test(path)) say('projects')
+    else if (/^\/(?:en\/)?contact\/?$/.test(path)) say('contact')
     else if (isArticle && Array.from(article?.textContent?.trim() ?? '').length > 3000) say('long')
     else if (first) {
       const hour = new Date().getHours()
