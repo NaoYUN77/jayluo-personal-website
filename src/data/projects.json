@@ -1,30 +1,44 @@
 [
   {
+    "id": "aster",
+    "name": "Aster",
+    "status": "active",
+    "featured": true,
+    "stack": ["TypeScript", "pi-durable", "Slack", "SQLite", "Docker"],
+    "repo": "https://github.com/NaoYUN77/Aster",
+    "zh": {
+      "description": "运行在腾讯云上的多用户 AI 助手：接入 Slack，一人一个 Hub，记忆和工具按 Hub 隔离；基于 pi-durable 的可恢复执行、分层记忆与 MCP 工具。"
+    },
+    "en": {
+      "description": "A multi-user AI agent on Tencent Cloud: Slack interface, one Hub per member with per-Hub memory and tools, durable execution on pi-durable, layered memory and MCP tools."
+    }
+  },
+  {
+    "id": "multi-agent-base-durable",
+    "name": "Multi-Agent Base Durable",
+    "status": "active",
+    "featured": true,
+    "stack": ["TypeScript", "pi-durable", "SQLite", "Multi-Agent"],
+    "repo": "https://github.com/NaoYUN77/multi-agent-base-durable",
+    "zh": {
+      "description": "可恢复的多智能体执行底座：主会话澄清需求、保存版本化计划、把任务派给子 agent 并逐个评审，每一步都持久化在 SQLite，进程中断后从最后提交的状态继续。"
+    },
+    "en": {
+      "description": "A durable base for multi-agent work: a Main conversation clarifies, saves a versioned plan, dispatches tasks to sub-agents and reviews each result, with every step persisted in SQLite so a crash resumes from the last commit."
+    }
+  },
+  {
     "id": "personal-website",
     "name": "Personal Website",
     "status": "active",
     "stack": ["Astro", "TypeScript", "Cloudflare"],
-    "repo": "https://github.com/NaoYUN77?tab=repositories",
-    "featured": true,
+    "repo": "https://github.com/NaoYUN77/jayluo-personal-website",
+    "featured": false,
     "zh": {
       "description": "你正在看的这个站点：博客、笔记和项目放在一起，中英文双语导航。"
     },
     "en": {
       "description": "The site you are reading: blog, notes, and projects in one place, with bilingual navigation."
-    }
-  },
-  {
-    "id": "personal-agent",
-    "name": "Personal Agent",
-    "status": "active",
-    "stack": ["TypeScript", "Agents", "Automation"],
-    "repo": "https://github.com/NaoYUN77/personal-agent",
-    "featured": true,
-    "zh": {
-      "description": "面向长期任务的个人 Agent 工作流，处理规划、上下文与多步骤执行。"
-    },
-    "en": {
-      "description": "A personal agent workflow for long-running plans, context, and multi-step execution."
     }
   },
   {
