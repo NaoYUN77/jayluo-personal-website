@@ -16,8 +16,8 @@ const { header: headerName, content: contentName, needPercent = true } = Astro.p
     style='--scroll-percent: 0;'
   >
     <svg class='progress-ring' viewBox='0 0 44 44' aria-hidden='true'>
-      <circle class='progress-ring-track' cx='22' cy='22' r='20' pathLength='100'></circle>
-      <circle class='progress-ring-value' cx='22' cy='22' r='20' pathLength='100'></circle>
+      <rect class='progress-ring-track' x='2' y='2' width='40' height='40' pathLength='100'></rect>
+      <rect class='progress-ring-value' x='2' y='2' width='40' height='40' pathLength='100'></rect>
     </svg>
     <div
       class='top-text absolute bottom-0 end-0 start-0 top-0 flex items-center justify-center group-[.ended]:opacity-0'

@@ -75,28 +75,21 @@ const siteGraph = {
 <link rel='icon' type='image/png' sizes='16x16' href='/favicon/favicon-16x16.png' />
 <link rel='manifest' href='/favicon/site.webmanifest' />
 
-{/* Font preloads */}
-<link rel='preload' href='/fonts/Satoshi-Variable.ttf' as='font' type='font/ttf' crossorigin />
-
-{
-  /* JetBrains Mono — terminal / dev mode / mascot. Loaded without blocking first paint:
-   media=print keeps the stylesheet off the render path, onload flips it on (display=swap
-   already makes the text fall back to system mono until the font arrives). */
-}
-<link rel='preconnect' href='https://fonts.googleapis.com' />
-<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
+{/* Local pixel fonts: no third-party font requests. */}
 <link
-  rel='stylesheet'
-  href='https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap'
-  media='print'
-  onload="this.media='all'"
+  rel='preload'
+  href='/fonts/nes/press-start-2p.woff2'
+  as='font'
+  type='font/woff2'
+  crossorigin
 />
-<noscript>
-  <link
-    rel='stylesheet'
-    href='https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap'
-  />
-</noscript>
+<link
+  rel='preload'
+  href='/fonts/nes/fusion-pixel-zh-hans.woff2'
+  as='font'
+  type='font/woff2'
+  crossorigin
+/>
 
 {/* Canonical URL */}
 <link rel='canonical' href={canonicalURL} />

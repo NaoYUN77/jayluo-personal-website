@@ -1,0 +1,545 @@
+/* NES visual system, shared by both locales and all public layouts.
+   html:root deliberately outranks Astro scoped styles and UnoCSS utilities. */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 210 11% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 11% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 11% 15%;
+  --primary: 210 11% 15%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 210 11% 15%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 35%;
+  --accent: 0 0% 90%;
+  --accent-foreground: 210 11% 15%;
+  --border: 0 0% 83%;
+  --input: 210 11% 15%;
+  --ring: 210 11% 15%;
+  --destructive: 0 70% 40%;
+  --destructive-foreground: 0 0% 100%;
+  --radius: 0px;
+  --code-bg: 0 0% 96%;
+  --code-fg: 210 11% 15%;
+  --pixel-body: 'Fusion Pixel', 'Courier New', 'Microsoft YaHei', monospace;
+  --pixel-display: 'Press Start 2P', 'Fusion Pixel', monospace;
+  --glass-panel: var(--card);
+  --glass-panel-hover: var(--muted);
+  --glass-panel-strong: var(--card);
+  --glass-edge: var(--border);
+  --glass-blur: none;
+  --un-default-border-color: hsl(var(--border));
+}
+html:root.dark {
+  color-scheme: dark;
+  --background: 210 11% 15%;
+  --foreground: 0 0% 100%;
+  --card: 210 11% 15%;
+  --card-foreground: 0 0% 100%;
+  --popover: 210 11% 15%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 210 11% 15%;
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 83%;
+  --accent: 0 0% 28%;
+  --accent-foreground: 0 0% 100%;
+  --border: 0 0% 55%;
+  --input: 0 0% 100%;
+  --ring: 0 0% 100%;
+  --code-bg: 0 0% 20%;
+  --code-fg: 0 0% 100%;
+}
+html:root {
+  background: hsl(var(--background));
+  font-family: var(--pixel-body);
+  scroll-padding-top: 6rem;
+}
+body {
+  min-height: 100dvh;
+  background: hsl(var(--background));
+  font-size: 16px;
+  line-height: 2;
+  -webkit-font-smoothing: none;
+}
+html:root :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+html:root :is(button, input, select, textarea) {
+  font-family: inherit;
+}
+html:root :is(button, a, input, select, textarea):focus-visible {
+  outline: 4px solid hsl(var(--foreground));
+  outline-offset: 4px;
+}
+html:root :is(button, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+html:root button {
+  cursor: pointer;
+}
+html:root :is(button:disabled, input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+html:root :is(code, pre, kbd) {
+  font-family: Consolas, 'Liberation Mono', monospace;
+}
+html:root [class*='rounded'] {
+  border-radius: 0 !important;
+}
+html:root .glass-surface {
+  border: 4px solid hsl(var(--foreground)) !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html:root .glass-interactive {
+  transition: background-color 120ms steps(2, end);
+}
+html:root .glass-interactive:hover {
+  background: hsl(var(--muted)) !important;
+  transform: none;
+}
+html:root .glass-interactive:focus-within {
+  outline: 4px solid hsl(var(--foreground));
+  outline-offset: 4px;
+}
+html:root header-component.glass-surface {
+  top: 0;
+  margin-bottom: 3rem;
+  border-width: 0 0 4px !important;
+  padding: 1rem 0;
+  gap: 1rem;
+}
+html:root header-component > a {
+  font-family: var(--pixel-display);
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+html:root .header-nav-link {
+  font-size: 14px;
+  min-height: 44px;
+  border-bottom: 4px solid transparent;
+}
+html:root .header-nav-link:is(:hover, .is-active) {
+  border-bottom-color: hsl(var(--foreground));
+  background: transparent;
+}
+html:root .header-icon-button {
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border: 4px solid hsl(var(--foreground));
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+html:root .header-icon-button:hover {
+  background: hsl(var(--muted));
+}
+html:root #headerExpandContent::after {
+  display: none;
+}
+html:root #highlight-gradient {
+  display: none;
+}
+html:root .home-hero {
+  border-block: 4px solid hsl(var(--foreground));
+  padding-block: 1.5rem 2rem;
+}
+html:root :is(.home-mono, .home-section-index, .site-search-eyebrow) {
+  font-family: var(--pixel-display);
+  font-size: 8px;
+  line-height: 2;
+  letter-spacing: 0;
+}
+html:root .home-live {
+  font-family: var(--pixel-body);
+  font-size: 14px;
+}
+html:root .home-live i {
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
+  box-shadow: none;
+}
+html:root .home-hero-main {
+  grid-template-columns: auto minmax(0, 1fr) minmax(14rem, 18rem);
+  gap: 1.5rem;
+}
+html:root .home-hero-copy h1 {
+  font-family: var(--pixel-display);
+  font-size: 32px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+html:root .home-hero-copy h1 span {
+  margin-left: 8px;
+}
+html:root .home-hero-copy p {
+  font-size: 16px;
+  line-height: 2;
+}
+html:root .home-avatar {
+  border: 4px solid hsl(var(--foreground));
+  padding: 4px;
+  background: hsl(var(--muted));
+  box-shadow: none;
+}
+html:root .home-avatar img {
+  border-radius: 0;
+  image-rendering: pixelated;
+}
+html:root .home-avatar::after {
+  border-radius: 0;
+  width: 12px;
+  height: 12px;
+}
+html:root .home-action {
+  border: 4px solid hsl(var(--foreground));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  min-height: 48px;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: 4px 4px 0 hsl(var(--border));
+}
+html:root .home-action-primary {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+html:root .home-action:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+html:root .home-action:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+html:root .home-action-icon {
+  width: 48px;
+}
+html:root .home-index a {
+  font-family: var(--pixel-body);
+  font-size: 14px;
+  min-height: 44px;
+}
+html:root .home-index b {
+  color: hsl(var(--foreground));
+  font-weight: 400;
+}
+html:root .home-section {
+  border-top: 4px solid hsl(var(--border));
+  grid-template-columns: 8rem minmax(0, 1fr);
+}
+html:root .home-section-header h2 {
+  font-size: 24px;
+  font-weight: 400;
+}
+html:root .home-section-header p {
+  font-family: var(--pixel-body);
+  font-size: 12px;
+}
+html:root :is(.home-list, .home-project-grid > .grid) {
+  border: 4px solid hsl(var(--foreground));
+  background: hsl(var(--background));
+  box-shadow: none;
+  backdrop-filter: none;
+}
+html:root .home-list > .home-list-row + .home-list-row {
+  border-top: 4px solid hsl(var(--border));
+}
+html:root .home-project-grid .project-card:nth-child(odd) {
+  border-right-width: 4px !important;
+}
+html:root .home-project-grid .project-card:nth-child(n + 3) {
+  border-top-width: 4px !important;
+}
+html:root .home-post-list .post-preview > a > :first-child,
+html:root .home-note-row > time {
+  font-family: var(--pixel-body);
+  font-size: 12px;
+}
+html:root .home-post-list .post-preview > a > div > div:first-child {
+  font-size: 16px;
+  line-height: 1.75;
+}
+html:root .home-more {
+  font-size: 14px;
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+html:root .project-title {
+  display: block;
+  font-weight: 400;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+html:root .project-description {
+  height: auto;
+  min-height: 4rem;
+  font-size: 14px;
+  line-height: 2;
+}
+html:root .project-card a.relative {
+  display: inline-flex;
+  min-width: 36px;
+  min-height: 36px;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid hsl(var(--border));
+}
+html:root .prose {
+  font-size: 16px;
+  line-height: 2;
+}
+html:root .prose :is(h2, h3) {
+  border-bottom: 4px solid hsl(var(--border));
+  padding-bottom: 8px;
+}
+html:root .prose a {
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+html:root .prose blockquote {
+  border: 4px solid hsl(var(--foreground));
+  background: hsl(var(--muted));
+  box-shadow: none;
+  font-style: normal;
+}
+html:root .prose blockquote::after {
+  display: none;
+}
+html:root .prose :is(th, td) {
+  border: 2px solid hsl(var(--border));
+  padding: 8px 12px;
+}
+html:root .prose th {
+  border-color: hsl(var(--foreground));
+}
+html:root .astro-code {
+  border: 4px solid hsl(var(--foreground));
+  border-radius: 0;
+  font-size: 14px;
+}
+html:root .astro-code button.copy {
+  opacity: 1;
+}
+html:root :is(.site-search-panel, .site-search-field, .site-search-close, .local-search-input) {
+  border: 4px solid hsl(var(--foreground));
+  border-radius: 0;
+  background: hsl(var(--background));
+  box-shadow: none;
+}
+html:root .site-search-dialog::backdrop {
+  background: hsl(210 11% 15% / 0.65);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html:root .site-search-head h2 {
+  font-size: 24px;
+  letter-spacing: 0;
+}
+html:root .site-search-field:focus-within {
+  outline: 4px solid hsl(var(--foreground));
+  outline-offset: 4px;
+  box-shadow: none;
+}
+html:root .site-search-kind {
+  border: 2px solid hsl(var(--foreground));
+  font-family: var(--pixel-body);
+  font-size: 12px;
+}
+html:root .site-search-result:focus-visible {
+  outline: 4px solid hsl(var(--foreground));
+  outline-offset: -4px;
+  box-shadow: none;
+}
+html:root .site-search-result-body strong {
+  white-space: normal;
+  font-weight: 400;
+}
+html:root :is(.site-search-excerpt, .site-search-status, .site-search-foot) {
+  font-size: 14px;
+  line-height: 1.8;
+}
+html:root :is(.site-search-meta, .site-search-shortcut) {
+  font-family: var(--pixel-body);
+  font-size: 12px;
+}
+html:root .site-search-foot {
+  border-top: 4px solid hsl(var(--border));
+}
+html:root body > div > footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 4px solid hsl(var(--border));
+}
+html:root ::-webkit-scrollbar-thumb {
+  border-radius: 0;
+}
+@media (max-width: 1060px) {
+  html:root .home-hero-main {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  html:root .home-mascot {
+    max-width: 22rem;
+  }
+}
+@media (max-width: 760px) {
+  html:root .home-hero-main {
+    grid-template-columns: 1fr;
+  }
+  html:root .home-hero-copy h1 {
+    font-size: 24px;
+  }
+  html:root .home-section {
+    grid-template-columns: 1fr;
+  }
+  html:root .home-project-grid .project-card:nth-child(odd) {
+    border-right: 0 !important;
+  }
+  html:root .home-project-grid .project-card + .project-card {
+    border-top: 4px solid hsl(var(--border)) !important;
+  }
+  html:root #content {
+    min-width: 0;
+  }
+}
+@media (max-width: 639px) {
+  html:root header-component > a {
+    font-size: 12px;
+  }
+  html:root header-component {
+    gap: 8px;
+  }
+  html:root header-component > div,
+  html:root header-component > div > div:last-child {
+    gap: 8px;
+  }
+  html:root #headerExpandContent {
+    top: 100%;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  html:root .expanded #headerExpandContent {
+    visibility: visible;
+    pointer-events: auto;
+    background: hsl(var(--background)) !important;
+    border: 4px solid hsl(var(--foreground)) !important;
+    padding: 12px 16px;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+  html:root .site-search-field kbd {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root {
+    scroll-behavior: auto;
+  }
+  html:root *,
+  html:root *::before,
+  html:root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  html:root .animate {
+    opacity: 1;
+  }
+}
+/* Theme controls and the theme package's shared buttons. */
+html:root #toggleLang {
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border: 4px solid hsl(var(--foreground));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+html:root a.group.inline-flex[data-astro-prefetch] {
+  min-height: 44px;
+  border: 4px solid hsl(var(--foreground));
+  padding: 4px 12px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+html:root a.group.inline-flex[data-astro-prefetch]:hover {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+html:root #to-top-btn {
+  border: 4px solid hsl(var(--foreground));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  min-width: 48px;
+  min-height: 48px;
+}
+html:root .progress-ring {
+  border-radius: 0;
+}
+html:root site-table-of-contents > h2 {
+  font-family: var(--pixel-display);
+  font-size: 8px;
+  line-height: 2;
+  padding-bottom: 12px;
+  border-bottom: 4px solid hsl(var(--border));
+  overflow-wrap: anywhere;
+}
+html:root body > div > footer > div {
+  border-top: 0;
+  padding-top: 0;
+}
+html:root
+  :is(
+    .home-action,
+    .home-avatar,
+    .home-avatar img,
+    .home-list,
+    .home-index a,
+    .home-project-grid > .grid,
+    .site-search-panel,
+    .site-search-field,
+    .site-search-close,
+    .site-search-result,
+    .site-search-kind,
+    .site-search-shortcut,
+    .local-search-input
+  ) {
+  border-radius: 0 !important;
+}
+html:root .home-avatar {
+  box-shadow: none;
+}
+html:root #to-top-btn {
+  box-shadow: none;
+}
+html:root #to-top-btn .progress-ring-value {
+  stroke-linecap: square;
+}
+
+html:root .home-hero-main {
+  padding-block: 40px;
+}
+html:root .home-avatar img {
+  filter: grayscale(1);
+}
+html:root .site-search-field input:focus-visible {
+  outline: none;
+}
+html:root #headerExpandContent {
+  transition: none;
+}
