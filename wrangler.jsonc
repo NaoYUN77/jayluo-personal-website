@@ -1,9 +1,14 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "jayluo-blog",
+  "name": "pseroanl-blog-notes-website",
+  "main": "./dist/_worker.js/index.js",
   "compatibility_date": "2026-10-17",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "./dist",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "keep_vars": true,
   "r2_buckets": [
     {
       "binding": "MEDIA",
