@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from 'astro'
+import { negotiateLanguage } from '@/i18n/negotiation'
 
 const notFound = new Response(null, {
   status: 404,
@@ -47,5 +48,6 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
     if (import.meta.env.PROD && !matchesAccess) return notFound
   }
 
-  return next()
+  if (context.isPrerendered) return next()
+  return negotiateLanguage(context.request, next)
 }

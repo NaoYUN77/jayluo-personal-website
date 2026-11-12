@@ -84,10 +84,7 @@ export function localizedPath(path: string, lang: Lang): string {
  */
 export function hasEnAlternate(barePath: string): boolean {
   if (barePath === '/') return true
-  if (
-    ['/about', '/projects', '/links', '/contact', '/search', '/curated', '/tags'].includes(barePath)
-  )
-    return true
+  if (['/about', '/projects', '/contact', '/search', '/tags'].includes(barePath)) return true
   // blog & notes: only the paginated list is mirrored under /en, not detail pages
   if (/^\/blog(\/\d+)?$/.test(barePath)) return true
   if (/^\/notes(\/\d+)?$/.test(barePath)) return true

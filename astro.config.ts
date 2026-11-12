@@ -93,6 +93,7 @@ export default defineConfig({
   // Local development uses Wrangler's platform proxy. Deployment is a
   // separate, explicit step.
   adapter: cloudflare({
+    workerEntryPoint: { path: 'src/worker.ts' },
     imageService: 'compile',
     platformProxy: {
       enabled: true,

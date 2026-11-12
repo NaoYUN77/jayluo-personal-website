@@ -39,6 +39,8 @@ const target =
     if (!btn) return
     const current = (btn.dataset.lang === 'en' ? 'en' : 'zh') as 'zh' | 'en'
     const next = btn.dataset.target ?? '/en'
+    const chosen = current === 'en' ? 'zh' : 'en'
+    document.cookie = `lang=${chosen}; Path=/; Max-Age=31536000; SameSite=Lax`
     trackSiteEvent('language_switch_click', {
       page: window.location.pathname,
       from_locale: current,

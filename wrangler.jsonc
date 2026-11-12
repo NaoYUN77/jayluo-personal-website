@@ -6,7 +6,29 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/",
+      "/about",
+      "/about/",
+      "/projects",
+      "/projects/",
+      "/contact",
+      "/contact/",
+      "/search",
+      "/search/",
+      "/tags",
+      "/tags/",
+      "/blog",
+      "/blog/*",
+      "/notes",
+      "/notes/*",
+      "!/_astro/*",
+      "!/fonts/*",
+      "!/images/*",
+      "!/en",
+      "!/en/*"
+    ]
   },
   "keep_vars": true,
   "r2_buckets": [
