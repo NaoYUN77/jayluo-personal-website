@@ -1,33 +1,62 @@
 ---
 title: 这个站点是怎么搭的
-description: 基于 Astro 和开源主题二次开发，把博客、笔记和项目放在同一个站里。
+description: 基于 Astro 和 astro-pure 二次开发，跑在 Cloudflare Workers 上，后来改成了 8-bit 像素风，还养了一只叫 Boo 的幽灵。
 publishDate: 2026-10-10
-updatedDate: 2026-10-17
-tags: ['Astro', '建站']
+updatedDate: 2026-11-13
+tags: ['Astro', '建站', 'Cloudflare']
 ---
 
 ## 技术栈
 
-- **Astro 5**：内容优先，默认零 JavaScript。
-- **TypeScript + Content Collections**：frontmatter 写错会在构建时报错。
-- **UnoCSS**：样式与主题保持一致。
-- **中英文路由**：中文在根路径，英文在 `/en` 下。
+- **Astro 5 + astro-pure 主题**：内容优先，在开源主题上二次开发。
+- **TypeScript + Content Collections**：frontmatter 写错会在构建时直接报错。
+- **UnoCSS**：样式和主题变量保持一致。
+- **Cloudflare Workers**：`output: 'server'`，页面和 API 都由一个 Worker 提供，静态资源走 Workers Assets。
+- **R2**：文章图片等媒体文件放在 R2 存储桶里。
 
 ## 三类内容
 
-内容放在三个独立的 collection 里：
-
 ```text
 src/content/
-  blog/      # 完整文章，支持中英镜像
-  notes/     # 短笔记，带状态和标签
-  projects/  # 项目数据目前在 src/data/projects.ts
+  blog/    # 完整文章，每篇一个目录：post.mdx + post.en.mdx 英文镜像
+  notes/   # 短笔记，带状态和标签
+src/data/
+  projects.ts  # 项目数据
 ```
 
-## 导航
+中文在根路径，英文在 `/en` 下。英文文章用 `translationKey` 指回对应的中文文章，语言按钮靠它在两版之间切换。
 
-中文导航使用中文标签，英文导航使用英文标签，右上角的语言按钮可以在两种语言之间切换。
+## 8-bit 像素风
+
+后来整个站点改成了 8-bit 像素风格：像素字体、方块边框、NES 风格的对话框。
+
+首页是一个游戏标题画面。左边是标题和菜单（博客、笔记、项目、关于、联系），下面闪着 PRESS START；文章做成存档槽，项目做成卡带，笔记在底部滚动播放。
+
+第一次打开网站时，会先放一段 Linux 风格的开机画面：刷一屏启动日志，再由 Boo 吃掉一排进度豆子。它在每个浏览器会话里只播一次，点一下或按任意键就能跳过，系统开了「减少动态效果」时也不会播。
+
+## Boo
+
+Boo 是这个博客的看门幽灵，一只 16×16 的像素小幽灵。它不只待在首页，切换页面时会跟着走：
+
+- 在首页的对话框里打招呼，告诉你最近更新了什么。
+- 平时缩在右下角，偶尔沿着页面边缘飘一飘，但会避开正文，不挡着你阅读。
+- 你停留一会儿，它可能从标题后面探个头，或者坐到「回到顶部」按钮上说句话，一两秒后再回去。
+- 读完一篇长文，它会跟你说声谢谢；凌晨还在逛，它会提醒你早点休息。
+
+嫌它吵的话，点一下「让 Boo 安静点」就行，这个设置会一直记住。
+
+## 语言自动跳转
+
+首次访问时，Worker 会读浏览器的 `Accept-Language`，英文用户自动跳到 `/en/`，中文用户留在中文页。手动切换过语言之后，会以你的选择为准（存在 cookie 里）。
+
+因为预渲染的页面会直接从静态资源返回、不经过 Worker，所以需要用 `assets.run_worker_first` 把首页、文章列表这些路径交给 Worker 先处理。
+
+## 后台和 API
+
+- `/api/v1` 下有文章、笔记、项目和媒体的接口，方便以后用别的工具来发内容。
+- `/admin` 用 Cloudflare Access 保护，中间件会校验 Access 的 JWT，没通过就直接返回 404。
+- 每篇文章的分享卡片图（OG 图）用 satori 和 resvg 在构建时生成。
 
 ## 部署
 
-构建产物是标准的静态站点，可以部署到 Vercel、Cloudflare Pages 或任何静态托管。
+代码在 GitHub，推到 `main` 分支后，Cloudflare Workers Builds 会自动构建并部署。

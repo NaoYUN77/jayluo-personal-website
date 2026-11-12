@@ -1,35 +1,64 @@
 ---
 title: How This Site Is Built
-description: A second take on an open-source Astro theme, with blog, notes, and projects in one place.
+description: Built on Astro and astro-pure, running on Cloudflare Workers, later redone in an 8-bit pixel style, with a resident ghost named Boo.
 publishDate: 2026-10-10
-updatedDate: 2026-10-17
-tags: ['astro', 'meta']
+updatedDate: 2026-11-13
+tags: ['Astro', 'site', 'Cloudflare']
 language: en
 translationKey: '20261010---about-this-site/post'
 ---
 
 ## Stack
 
-- **Astro 5**: content-first, zero JavaScript by default.
-- **TypeScript + Content Collections**: a malformed frontmatter field fails the build.
-- **UnoCSS**: keeps styling consistent with the theme.
-- **Bilingual routes**: Chinese at the root, English under `/en`.
+- **Astro 5 + the astro-pure theme**: content first, customized on top of an open-source theme.
+- **TypeScript + Content Collections**: a bad frontmatter field fails the build.
+- **UnoCSS**: styles stay consistent with the theme variables.
+- **Cloudflare Workers**: `output: 'server'`, so pages and APIs are served by one Worker, with static files on Workers Assets.
+- **R2**: post images and other media live in an R2 bucket.
 
-## Three content types
-
-Content lives in three separate collections:
+## Three kinds of content
 
 ```text
 src/content/
-  blog/      # finished posts, with optional English mirrors
-  notes/     # short notes with status and tags
-  projects/  # project data currently in src/data/projects.ts
+  blog/    # full posts, one folder each: post.mdx + post.en.mdx English mirror
+  notes/   # short notes with status and tags
+src/data/
+  projects.ts  # project data
 ```
 
-## Navigation
+Chinese lives at the root and English under `/en`. Each English post points back to its Chinese original with `translationKey`, which is how the language button switches between them.
 
-The Chinese navigation uses Chinese labels, the English navigation uses English labels, and the language button in the header switches between them.
+## 8-bit pixel style
+
+Later the whole site was redone in an 8-bit pixel style: pixel fonts, blocky borders, and NES-style dialog boxes.
+
+The home page is a game title screen. The title and menu (Blog, Notes, Projects, About, Contact) sit on the left with a blinking PRESS START; posts show up as save slots, projects as cartridges, and notes scroll by in a ticker.
+
+The first time you open the site, a Linux-style boot screen plays: a screen of boot logs scrolls past, then Boo eats a row of progress dots. It plays once per browser session, a click or any key skips it, and it doesn't play if your system asks for reduced motion.
+
+## Boo
+
+Boo is the blog's resident ghost, a 16×16 pixel ghost. It doesn't stay on the home page; it follows you across pages:
+
+- It says hi in a dialog box on the home page and tells you what's new.
+- Most of the time it sits in the bottom-right corner and sometimes drifts along the edges of the page, staying clear of the text so it never gets in the way of reading.
+- If you stay a while, it might peek out from behind a heading or sit on the back-to-top button and say something, then go back after a second or two.
+- It thanks you when you finish a long post, and if you're browsing in the small hours, it reminds you to get some rest.
+
+If it gets to be too much, click "Quiet, Boo" and the setting is remembered.
+
+## Automatic language redirect
+
+On a first visit, the Worker reads the browser's `Accept-Language` header. English readers are sent to `/en/`, and Chinese readers stay on the Chinese pages. Once you've switched languages by hand, your choice wins (it's kept in a cookie).
+
+Prerendered pages are served straight from static assets without going through the Worker, so `assets.run_worker_first` hands paths like the home page and post lists to the Worker first.
+
+## Admin and API
+
+- `/api/v1` has endpoints for posts, notes, projects, and media, so other tools can publish content later.
+- `/admin` is protected by Cloudflare Access. The middleware checks the Access JWT and returns a 404 if it doesn't pass.
+- Each post's share card image (OG image) is generated at build time with satori and resvg.
 
 ## Deployment
 
-The output is a standard static site, deployable to Vercel, Cloudflare Pages, or any static host.
+The code is on GitHub. Pushing to `main` triggers Cloudflare Workers Builds, which builds and deploys automatically.
