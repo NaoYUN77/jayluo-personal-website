@@ -9,7 +9,7 @@ export const theme: ThemeUserConfig = {
   /** Description metadata for your website. Can be used in page metadata. */
   description: 'Jayluo 的博客、笔记与项目。',
   /** The default favicon for your site which should be a path to an image in the `public/` directory. */
-  favicon: '/favicon/favicon.ico',
+  favicon: '/favicon/favicon.svg',
   /** Specify the default language for this site. */
   locale: {
     lang: 'zh-CN',
@@ -24,8 +24,8 @@ export const theme: ThemeUserConfig = {
   },
   /** Set a logo image to show in the homepage. */
   logo: {
-    src: '/api/v1/avatar',
-    alt: 'Avatar'
+    src: '/avatar-fallback.svg',
+    alt: 'Boo, the pixel ghost'
   },
 
   // === Global configuration ===

@@ -4,10 +4,9 @@ import path from 'node:path'
 import { Resvg } from '@resvg/resvg-js'
 import satori from 'satori'
 
-const fallbackAvatarBuffer = fs.readFileSync(path.resolve('./src/assets/avatar.png'))
-let avatarDataUrl = `data:image/png;base64,${fallbackAvatarBuffer.toString('base64')}`
-let avatarHash = createHash('sha256').update(fallbackAvatarBuffer).digest('hex')
-let avatarLoadPromise: Promise<void> | null = null
+const fallbackAvatarBuffer = fs.readFileSync(path.resolve('./public/avatar-fallback.svg'))
+const avatarDataUrl = `data:image/svg+xml;base64,${fallbackAvatarBuffer.toString('base64')}`
+const avatarHash = createHash('sha256').update(fallbackAvatarBuffer).digest('hex')
 
 // Rendered PNGs are cached across builds: each one costs two Google Fonts
 // round trips plus a satori/resvg render (~0.5s), and CI restores node_modules
@@ -30,33 +29,6 @@ const rendererHash = (() => {
   }
   return h.digest('hex')
 })()
-
-async function loadAvatar() {
-  if (avatarLoadPromise) return avatarLoadPromise
-
-  avatarLoadPromise = (async () => {
-    const remote =
-      process.env.AVATAR_URL ||
-      (process.env.SITE_URL ? new URL('/api/v1/avatar', process.env.SITE_URL).href : '')
-    if (!remote) return
-
-    try {
-      const response = await fetch(remote)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const bytes = Buffer.from(await response.arrayBuffer())
-      if (bytes.length === 0 || bytes.length > 5 * 1024 * 1024) {
-        throw new Error('avatar response has an invalid size')
-      }
-      const contentType = response.headers.get('content-type')?.split(';')[0] || 'image/png'
-      avatarDataUrl = `data:${contentType};base64,${bytes.toString('base64')}`
-      avatarHash = createHash('sha256').update(bytes).digest('hex')
-    } catch (error) {
-      console.warn(`[og] could not load ${remote}; using the repository avatar`, error)
-    }
-  })()
-
-  return avatarLoadPromise
-}
 
 // Hits refresh mtime, so anything untouched for a month is stale input.
 try {
@@ -158,7 +130,7 @@ function header(): OgNode {
         src: avatarDataUrl,
         width: 72,
         height: 72,
-        style: { borderRadius: 999, border: `2px solid ${PRIMARY}` }
+        style: { borderRadius: 0, border: `2px solid ${PRIMARY}` }
       }
     },
     text(
@@ -221,7 +193,6 @@ function shell(inner: OgNode[]): OgNode {
 }
 
 export async function defaultOgPng(opts: { name: string; tagline: string }) {
-  await loadAvatar()
   const tree = shell([
     header(),
     div({ flexDirection: 'column', gap: 24 }, [
@@ -260,7 +231,6 @@ export async function postOgPng(opts: {
   date: string
   tags?: string[]
 }) {
-  await loadAvatar()
   const desc = (opts.description ?? '').trim()
   const truncDesc = desc.length > 110 ? desc.slice(0, 108) + '…' : desc
   const tags = (opts.tags ?? []).slice(0, 4)
@@ -469,7 +439,6 @@ export async function talkOgPng(opts: {
   topics?: string[]
   upcoming?: boolean
 }) {
-  await loadAvatar()
   const version = 'v' + String(opts.episode).padStart(2, '0')
   const eyebrow = `// 分享会 · 第 ${opts.episode} 期`
   const subtitle = clip((opts.subtitle ?? '').trim(), 44)
@@ -509,7 +478,6 @@ export async function talksOgPng(opts: {
   description: string
   episodes: { episode: number; date: string; title: string; upcoming?: boolean }[]
 }) {
-  await loadAvatar()
   const eyebrow = '// 分享会 · Talks'
   const title = '分享会 · Talks'
   const subtitle = clip(opts.description, 44)
