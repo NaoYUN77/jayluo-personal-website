@@ -91,7 +91,7 @@ async function cachedPng(input: unknown, render: () => Promise<Buffer>) {
 }
 
 const PRIMARY = '#659EB9'
-const SITE = new URL(process.env.SITE_URL || 'https://example.com').host
+const SITE = new URL(process.env.SITE_URL || 'https://blog.naiwa.asia').host
 const LATIN_CHARS =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:;!?@#$%&*()[]{}<>/\\|-_=+"\'` ·⭐'
 
@@ -389,7 +389,7 @@ function terminalShell(eyebrow: string, title: string, subtitle: string, lines: 
     [
       div({ justifyContent: 'space-between', fontFamily: MONO, fontSize: 24, fontWeight: 500 }, [
         text({ color: TERM.teal2 }, eyebrow),
-        text({ color: TERM.faint }, 'example.com')
+        text({ color: TERM.faint }, SITE)
       ]),
       div({ flexDirection: 'column', gap: 18 }, [
         text(

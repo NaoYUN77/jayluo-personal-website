@@ -82,8 +82,8 @@ export const integ: IntegrationUserConfig = {
     applyTip: [
       { name: 'Name', val: theme.title },
       { name: 'Desc', val: theme.description || 'Null' },
-      { name: 'Link', val: 'https://example.com/' },
-      { name: 'Avatar', val: 'https://example.com/favicon/favicon.ico' }
+      { name: 'Link', val: 'https://blog.naiwa.asia/' },
+      { name: 'Avatar', val: 'https://blog.naiwa.asia/favicon/favicon.ico' }
     ]
   },
   // Page search runs on /api/search.json (see SiteSearch.astro); pagefind build hook disabled

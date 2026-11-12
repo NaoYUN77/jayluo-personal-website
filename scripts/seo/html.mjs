@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-export const origin = (process.env.SITE_URL || 'https://example.com').replace(/\/+$/, '')
+export const origin = (process.env.SITE_URL || 'https://blog.naiwa.asia').replace(/\/+$/, '')
 export const hash = (text) => createHash('sha256').update(text).digest('hex')
 export const decode = (s = '') =>
   s

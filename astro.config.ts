@@ -36,7 +36,7 @@ const excludedSitemapPathPatterns = [
   /^\/api(?:\/|$)/
 ]
 
-const siteUrl = (process.env.SITE_URL || 'https://example.com').replace(/\/+$/, '')
+const siteUrl = (process.env.SITE_URL || 'https://blog.naiwa.asia').replace(/\/+$/, '')
 
 const shouldIncludeInSitemap = (page: string) => {
   const { pathname } = new URL(page)
