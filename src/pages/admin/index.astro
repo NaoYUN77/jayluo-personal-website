@@ -10,151 +10,255 @@ export const prerender = false
       <div>
         <p class='admin-eyebrow'>JAYLUO / ADMIN</p>
         <h1>内容管理</h1>
-        <p class='admin-subtitle'>通过 content API 创建、编辑和删除文章与笔记。</p>
+        <p class='admin-subtitle'>在这里写草稿，保存后由 blog 机器人润色发布。</p>
       </div>
-      <a class='admin-btn admin-btn-ghost' href='/blog'>前台预览</a>
+      <div class='admin-toolbar-actions'>
+        <span id='admin-connection' class='admin-chip' data-state='idle'>未连接</span>
+        <a class='admin-btn admin-btn-ghost' href='/blog' target='_blank' rel='noopener'>
+          前台预览
+        </a>
+      </div>
     </header>
 
-    <form id='admin-auth' class='admin-card'>
-      <label class='admin-field'>
-        <span>Content API token</span>
-        <input
-          id='admin-token'
-          type='password'
-          autocomplete='off'
-          spellcheck='false'
-          placeholder='粘贴 CONTENT_API_TOKEN'
-          required
-        />
-      </label>
-      <button class='admin-btn' type='submit'>连接并加载</button>
-      <p id='admin-auth-status' class='admin-status' aria-live='polite'>
-        Token 只保存在当前浏览器的 localStorage。
-      </p>
-    </form>
-
-    <div class='admin-grid'>
-      <form id='admin-form' class='admin-card' novalidate>
-        <div class='admin-card-head'>
-          <h2 id='admin-form-title'>创建文章</h2>
-          <span id='admin-form-context' class='admin-chip'></span>
-        </div>
-
-        <div class='admin-fields'>
-          <label class='admin-field'>
-            <span>URL ID</span>
-            <input id='admin-id' required pattern='[a-z0-9][a-z0-9-]*' />
-          </label>
-
-          <label class='admin-field'>
-            <span>语言</span>
-            <select id='admin-locale'>
-              <option value='zh'>中文</option>
-              <option value='en'>English</option>
-            </select>
-          </label>
-
-          <label class='admin-field' data-post-field hidden>
-            <span>文章日期</span>
-            <input id='admin-publish-date' type='date' />
-          </label>
-
-          <label class='admin-field' data-note-field hidden>
-            <span>笔记日期</span>
-            <input id='admin-date' type='date' />
-          </label>
-
-          <label class='admin-field'>
-            <span>标题</span>
-            <input id='admin-title' maxlength='60' required />
-          </label>
-
-          <label class='admin-field'>
-            <span>摘要</span>
-            <input id='admin-description' maxlength='160' placeholder='用一句话说清楚这篇内容。' />
-          </label>
-
-          <label class='admin-field'>
-            <span>标签（逗号分隔）</span>
-            <input id='admin-tags' placeholder='site, meta' />
-          </label>
-
-          <label class='admin-field' data-note-field hidden>
-            <span>笔记类型</span>
-            <select id='admin-note-type'>
-              <option value='note'>note</option>
-              <option value='snippet'>snippet</option>
-              <option value='draft'>draft</option>
-              <option value='idea'>idea</option>
-              <option value='research'>research</option>
-              <option value='reference'>reference</option>
-            </select>
-          </label>
-
-          <label class='admin-field' data-note-field hidden>
-            <span>笔记状态</span>
-            <select id='admin-note-status'>
-              <option value='in-progress'>in-progress</option>
-              <option value='incomplete'>incomplete</option>
-              <option value='ready'>ready</option>
-              <option value='archived'>archived</option>
-            </select>
-          </label>
-
-          <label class='admin-field'>
-            <span>格式</span>
-            <select id='admin-format'>
-              <option value='mdx'>Markdown MDX</option>
-              <option value='md'>Plain Markdown</option>
-            </select>
-          </label>
-
-          <label class='admin-field admin-body-field'>
-            <span>正文 Markdown</span>
-            <textarea id='admin-body' rows='14'></textarea>
-          </label>
-        </div>
-
-        <label class='admin-check'>
-          <input id='admin-draft' type='checkbox' />
-          <span>保存为草稿</span>
+    <details id='admin-auth' class='admin-card admin-auth' open>
+      <summary class='admin-auth-summary'>
+        <span>Content API 连接</span>
+        <span id='admin-auth-badge' class='admin-chip' data-state='idle'>未连接</span>
+      </summary>
+      <form id='admin-auth-form' class='admin-auth-form'>
+        <label class='admin-field'>
+          <span>Content API token</span>
+          <input
+            id='admin-token'
+            type='password'
+            autocomplete='off'
+            spellcheck='false'
+            placeholder='粘贴 CONTENT_API_TOKEN'
+            required
+          />
         </label>
+        <button class='admin-btn' type='submit'>连接并加载</button>
+        <p id='admin-auth-status' class='admin-status' aria-live='polite'>
+          Token 只保存在当前浏览器的 localStorage。
+        </p>
+      </form>
+    </details>
+
+    <section class='admin-card admin-editor'>
+      <div class='admin-card-head admin-editor-head'>
+        <div class='admin-editor-heading'>
+          <h2 id='admin-form-title'>写文章</h2>
+          <span id='admin-form-context' class='admin-chip' hidden></span>
+          <span id='admin-draft-chip' class='admin-chip admin-chip-draft'>草稿</span>
+        </div>
+        <div class='admin-collection' role='group' aria-label='内容类型'>
+          <button class='admin-btn admin-btn-ghost is-active' type='button' data-collection='posts'>
+            文章
+          </button>
+          <button class='admin-btn admin-btn-ghost' type='button' data-collection='notes'>
+            笔记
+          </button>
+          <button class='admin-btn admin-btn-ghost' type='button' id='admin-refresh'>
+            刷新列表
+          </button>
+        </div>
+      </div>
+
+      <div id='admin-autosave' class='admin-autosave' hidden>
+        <span id='admin-autosave-text'>发现本机自动保存。</span>
+        <button
+          class='admin-btn admin-btn-ghost admin-row-btn'
+          type='button'
+          id='admin-autosave-restore'
+        >
+          恢复
+        </button>
+        <button
+          class='admin-btn admin-btn-ghost admin-row-btn'
+          type='button'
+          id='admin-autosave-discard'
+        >
+          忽略
+        </button>
+      </div>
+
+      <form id='admin-form' class='admin-editor-form' novalidate>
+        <div class='admin-writing-head'>
+          <label class='admin-field admin-title-field'>
+            <span class='admin-field-label'>
+              <span>标题</span>
+              <span id='admin-title-count' class='admin-limit'>0 / 60</span>
+            </span>
+            <input
+              id='admin-title'
+              maxlength='60'
+              autocomplete='off'
+              placeholder='给这篇文章一个标题'
+            />
+          </label>
+
+          <label class='admin-field admin-desc-field'>
+            <span class='admin-field-label'>
+              <span>摘要</span>
+              <span id='admin-desc-count' class='admin-limit'>0 / 160</span>
+            </span>
+            <input
+              id='admin-description'
+              maxlength='160'
+              autocomplete='off'
+              placeholder='一句话说清楚这篇内容（留空会自动取正文开头）'
+            />
+          </label>
+        </div>
+
+        <div class='admin-editor-bar'>
+          <div class='admin-view-switch' role='group' aria-label='编辑器视图'>
+            <button type='button' data-view='write'>写作</button>
+            <button type='button' data-view='split' class='is-active'>分栏</button>
+            <button type='button' data-view='preview'>预览</button>
+          </div>
+          <div class='admin-editor-tools' role='group' aria-label='Markdown 快捷工具'>
+            <button type='button' data-md='bold' title='加粗（Ctrl/Cmd + B）'>B</button>
+            <button type='button' data-md='italic' title='斜体（Ctrl/Cmd + I）'><em>I</em></button>
+            <button type='button' data-md='heading' title='二级标题'>H2</button>
+            <button type='button' data-md='link' title='链接（Ctrl/Cmd + K）'>链接</button>
+            <button type='button' data-md='code' title='行内代码'>代码</button>
+            <button type='button' data-md='quote' title='引用'>引用</button>
+            <button type='button' data-md='list' title='无序列表'>列表</button>
+          </div>
+          <span id='admin-body-stats' class='admin-body-stats'>0 字 · 约 1 分钟</span>
+        </div>
+
+        <div id='admin-panes' class='admin-panes' data-view='split'>
+          <textarea
+            id='admin-body'
+            class='admin-body'
+            spellcheck='true'
+            aria-label='正文 Markdown'
+            placeholder='从这里开始写 Markdown…'></textarea>
+          <div class='admin-preview-wrap'>
+            <article
+              id='admin-preview'
+              class='admin-preview prose prose-pure dark:prose-invert max-w-none'
+              aria-label='Markdown 预览'
+            >
+            </article>
+          </div>
+        </div>
+
+        <details class='admin-settings'>
+          <summary>
+            <span id='admin-settings-title'>文章设置</span>
+            <span id='admin-settings-hint' class='admin-settings-hint'>
+              URL ID、日期、语言、标签、格式
+            </span>
+          </summary>
+          <div class='admin-fields'>
+            <label class='admin-field'>
+              <span class='admin-field-label'>
+                <span>URL ID</span>
+                <span class='admin-limit'>选填</span>
+              </span>
+              <input
+                id='admin-id'
+                pattern='[a-z0-9][a-z0-9-]*'
+                spellcheck='false'
+                placeholder='留空会按标题自动生成'
+              />
+              <small class='admin-hint'>只能使用小写字母、数字和连字符，保存后不可修改。</small>
+            </label>
+
+            <label class='admin-field'>
+              <span class='admin-field-label'>
+                <span>语言</span>
+                <span id='admin-locale-hint' class='admin-limit'></span>
+              </span>
+              <select id='admin-locale'>
+                <option value='zh'>中文</option>
+                <option value='en'>English</option>
+              </select>
+              <small class='admin-hint'>英文文章请填写中文文章相同的 URL ID，作为翻译镜像。</small>
+            </label>
+
+            <label class='admin-field' data-post-field hidden>
+              <span>文章日期</span>
+              <input id='admin-publish-date' type='date' />
+            </label>
+
+            <label class='admin-field' data-note-field hidden>
+              <span>笔记日期</span>
+              <input id='admin-date' type='date' />
+            </label>
+
+            <label class='admin-field'>
+              <span class='admin-field-label'>
+                <span>标签（逗号分隔）</span>
+                <span class='admin-limit'>最多 20 个</span>
+              </span>
+              <input id='admin-tags' placeholder='site, meta' spellcheck='false' />
+            </label>
+
+            <label class='admin-field' data-note-field hidden>
+              <span>笔记类型</span>
+              <select id='admin-note-type'>
+                <option value='note'>note</option>
+                <option value='snippet'>snippet</option>
+                <option value='draft'>draft</option>
+                <option value='idea'>idea</option>
+                <option value='research'>research</option>
+                <option value='reference'>reference</option>
+              </select>
+            </label>
+
+            <label class='admin-field' data-note-field hidden>
+              <span>笔记状态</span>
+              <select id='admin-note-status'>
+                <option value='in-progress'>in-progress</option>
+                <option value='incomplete'>incomplete</option>
+                <option value='ready'>ready</option>
+                <option value='archived'>archived</option>
+              </select>
+            </label>
+
+            <label class='admin-field'>
+              <span>格式</span>
+              <select id='admin-format'>
+                <option value='mdx'>Markdown MDX</option>
+                <option value='md'>Plain Markdown</option>
+              </select>
+            </label>
+          </div>
+        </details>
 
         <div class='admin-form-actions'>
-          <button class='admin-btn' type='submit' id='admin-submit'>创建</button>
-          <button class='admin-btn admin-btn-ghost' type='button' id='admin-reset'>清空</button>
+          <label class='admin-check'>
+            <input id='admin-draft' type='checkbox' checked />
+            <span>保存为草稿（不公开）</span>
+          </label>
+          <div class='admin-form-buttons'>
+            <button class='admin-btn admin-btn-ghost' type='button' id='admin-reset'>新建</button>
+            <button class='admin-btn admin-save' type='submit' id='admin-submit'>保存草稿</button>
+          </div>
         </div>
         <p id='admin-result' class='admin-status' aria-live='polite'></p>
       </form>
-
-      <section class='admin-card'>
-        <div class='admin-card-head'>
-          <h2>内容列表</h2>
-          <div class='admin-collection'>
-            <button
-              class='admin-btn admin-btn-ghost is-active'
-              type='button'
-              data-collection='posts'
-            >
-              文章
-            </button>
-            <button class='admin-btn admin-btn-ghost' type='button' data-collection='notes'>
-              笔记
-            </button>
-            <button class='admin-btn admin-btn-ghost' type='button' id='admin-refresh'>刷新</button>
-          </div>
-        </div>
-        <div id='admin-list' class='admin-list'>
-          <p class='admin-status'>连接 token 后自动加载。</p>
-        </div>
-      </section>
-    </div>
+    </section>
 
     <section class='admin-card'>
       <div class='admin-card-head'>
+        <h2 id='admin-list-title'>文章列表</h2>
+        <span class='admin-eyebrow'>按日期倒序 · 含草稿</span>
+      </div>
+      <div id='admin-list' class='admin-list'>
+        <p class='admin-status'>连接 token 后自动加载。</p>
+      </div>
+    </section>
+
+    <details class='admin-card admin-media'>
+      <summary class='admin-card-head'>
         <h2>图片 / 头像</h2>
         <span class='admin-eyebrow'>R2 MEDIA</span>
-      </div>
+      </summary>
       <div class='admin-media-grid'>
         <form id='media-form' class='admin-media-item'>
           <input
@@ -188,7 +292,7 @@ export const prerender = false
           </div>
         </form>
       </div>
-    </section>
+    </details>
   </main>
 </BaseLayout>
 
@@ -220,6 +324,14 @@ export const prerender = false
     padding: 1.1rem 1.25rem;
   }
 
+  .admin-toolbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
   .admin-eyebrow {
     color: hsl(var(--muted-foreground));
     font:
@@ -237,13 +349,6 @@ export const prerender = false
 
   .admin-subtitle {
     color: hsl(var(--muted-foreground));
-  }
-
-  .admin-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr);
-    align-items: start;
-    gap: 1.35rem;
   }
 
   .admin-card {
@@ -282,6 +387,324 @@ export const prerender = false
       monospace;
   }
 
+  .admin-chip[hidden] {
+    display: none;
+  }
+
+  .admin-chip-draft {
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
+  }
+
+  .admin-chip-published {
+    background: hsl(var(--muted) / 0.8);
+    color: hsl(var(--muted-foreground));
+  }
+
+  .admin-chip[data-state='ok'] {
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
+  }
+
+  .admin-chip[data-state='warn'] {
+    background: hsl(var(--destructive) / 0.12);
+    color: hsl(var(--destructive));
+  }
+
+  .admin-chip[data-state='error'] {
+    background: hsl(var(--destructive) / 0.16);
+    color: hsl(var(--destructive));
+  }
+
+  .admin-chip[data-state='connecting'] {
+    background: hsl(var(--primary) / 0.1);
+    color: hsl(var(--muted-foreground));
+  }
+
+  .admin-auth {
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .admin-auth-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.25rem;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 560;
+  }
+
+  .admin-auth-summary::-webkit-details-marker,
+  .admin-settings > summary::-webkit-details-marker,
+  .admin-media > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .admin-auth[open] > .admin-auth-summary {
+    border-bottom: 1px solid hsl(var(--glass-edge));
+  }
+
+  .admin-auth-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.8rem;
+    padding: 1rem 1.25rem 1.15rem;
+  }
+
+  .admin-auth-form .admin-status {
+    grid-column: 1 / -1;
+  }
+
+  .admin-editor {
+    gap: 1.1rem;
+  }
+
+  .admin-editor-form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .admin-editor-head {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .admin-editor-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .admin-collection {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .admin-writing-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .admin-title-field input {
+    min-height: 2.9rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+
+  .admin-field-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .admin-limit {
+    color: hsl(var(--muted-foreground));
+    font:
+      500 0.72rem 'JetBrains Mono',
+      ui-monospace,
+      monospace;
+    white-space: nowrap;
+  }
+
+  .admin-limit.is-near {
+    color: hsl(var(--primary));
+  }
+
+  .admin-limit.is-over {
+    color: hsl(var(--destructive));
+  }
+
+  .admin-hint {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.76rem;
+    font-weight: 400;
+    line-height: 1.45;
+  }
+
+  .admin-editor-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .admin-view-switch,
+  .admin-editor-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.2rem;
+    border: 1px solid hsl(var(--glass-edge));
+    border-radius: 10px;
+    background: hsl(var(--glass-panel-fallback) / 0.3);
+  }
+
+  .admin-view-switch button,
+  .admin-editor-tools button {
+    border: 0;
+    background: transparent;
+    color: hsl(var(--muted-foreground));
+    border-radius: 7px;
+    padding: 0.32rem 0.62rem;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 520;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .admin-view-switch button:hover,
+  .admin-editor-tools button:hover {
+    background: hsl(var(--muted) / 0.75);
+    color: hsl(var(--foreground));
+  }
+
+  .admin-view-switch button.is-active {
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--foreground));
+  }
+
+  .admin-editor-tools button {
+    min-width: 2rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  .admin-body-stats {
+    color: hsl(var(--muted-foreground));
+    font:
+      500 0.75rem 'JetBrains Mono',
+      ui-monospace,
+      monospace;
+    white-space: nowrap;
+  }
+
+  .admin-panes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.9rem;
+  }
+
+  .admin-panes[data-view='write'],
+  .admin-panes[data-view='preview'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-panes[data-view='write'] .admin-preview-wrap {
+    display: none;
+  }
+
+  .admin-panes[data-view='preview'] .admin-body {
+    display: none;
+  }
+
+  .admin-body {
+    width: 100%;
+    height: clamp(24rem, 62vh, 46rem);
+    min-height: 24rem;
+    border: 1px solid hsl(var(--glass-edge));
+    border-radius: 12px;
+    background: hsl(var(--glass-panel-fallback) / 0.3);
+    color: hsl(var(--foreground));
+    padding: 1rem 1.1rem;
+    font:
+      15px/1.72 'JetBrains Mono',
+      ui-monospace,
+      monospace;
+    tab-size: 2;
+    outline: 0;
+    resize: none;
+  }
+
+  .admin-body:focus {
+    border-color: hsl(var(--primary) / 0.7);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.13);
+  }
+
+  .admin-preview-wrap {
+    height: clamp(24rem, 62vh, 46rem);
+    overflow: auto;
+    border: 1px solid hsl(var(--glass-edge));
+    border-radius: 12px;
+    background: hsl(var(--glass-panel-fallback) / 0.24);
+    padding: 1rem 1.2rem;
+  }
+
+  .admin-preview {
+    min-height: 100%;
+  }
+
+  .admin-preview :global(pre) {
+    overflow-x: auto;
+  }
+
+  .admin-preview :global(img) {
+    max-width: 100%;
+  }
+
+  .admin-preview-empty {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.9rem;
+  }
+
+  .admin-settings {
+    border: 1px solid hsl(var(--glass-edge));
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    background: hsl(var(--glass-panel-fallback) / 0.18);
+  }
+
+  .admin-settings > summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 550;
+  }
+
+  .admin-settings[open] > summary {
+    margin-bottom: 0.9rem;
+  }
+
+  .admin-settings-hint {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.76rem;
+    font-weight: 400;
+  }
+
+  .admin-autosave {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    border: 1px solid hsl(var(--primary) / 0.3);
+    background: hsl(var(--primary) / 0.08);
+    border-radius: 10px;
+    padding: 0.5rem 0.8rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.84rem;
+  }
+
+  .admin-autosave[hidden] {
+    display: none;
+  }
+
   .admin-fields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -296,9 +719,8 @@ export const prerender = false
     font-weight: 520;
   }
 
-  .admin-body-field,
-  .admin-check {
-    grid-column: 1 / -1;
+  .admin-field[hidden] {
+    display: none;
   }
 
   .admin-check {
@@ -308,6 +730,27 @@ export const prerender = false
     color: hsl(var(--muted-foreground));
     font-size: 0.9rem;
     font-weight: 450;
+    cursor: pointer;
+  }
+
+  .admin-check input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: hsl(var(--primary));
+  }
+
+  .admin-form-actions {
+    flex-wrap: wrap;
+  }
+
+  .admin-form-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .admin-save {
+    min-width: 8.5rem;
   }
 
   .admin-btn {
@@ -366,18 +809,18 @@ export const prerender = false
     color: hsl(var(--destructive-foreground));
   }
 
-  .admin-collection {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.4rem;
-    flex-shrink: 0;
-  }
-
   .admin-status {
     margin-block: 0;
     color: hsl(var(--muted-foreground));
     font-size: 0.88rem;
+  }
+
+  .admin-status[data-state='success'] {
+    color: hsl(var(--primary));
+  }
+
+  .admin-status[data-state='error'] {
+    color: hsl(var(--destructive));
   }
 
   .admin-list {
@@ -408,7 +851,9 @@ export const prerender = false
   }
 
   .admin-row-title {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     margin: 0;
     font-size: 0.98rem;
     font-weight: 560;
@@ -418,6 +863,17 @@ export const prerender = false
 
   .admin-row-title:hover {
     color: hsl(var(--primary));
+  }
+
+  .admin-row-draft {
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
+    font:
+      500 0.66rem 'JetBrains Mono',
+      ui-monospace,
+      monospace;
   }
 
   .admin-row-meta,
@@ -441,10 +897,26 @@ export const prerender = false
     min-width: 3rem;
   }
 
+  .admin-media {
+    padding: 0;
+    gap: 0;
+  }
+
+  .admin-media > summary {
+    padding: 1.1rem 1.25rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .admin-media[open] > summary {
+    border-bottom: 1px solid hsl(var(--glass-edge));
+  }
+
   .admin-media-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.1rem;
+    padding: 1.1rem 1.25rem 1.25rem;
   }
 
   .admin-media-item {
@@ -455,7 +927,8 @@ export const prerender = false
 
   .admin-fields input,
   .admin-fields select,
-  .admin-fields textarea,
+  .admin-auth-form input,
+  .admin-writing-head input,
   .admin-media-item input:not([type='file']),
   .admin-media-item input[type='file'] {
     width: 100%;
@@ -469,21 +942,19 @@ export const prerender = false
     outline: 0;
   }
 
+  .admin-fields input:disabled,
+  .admin-fields select:disabled {
+    opacity: 0.68;
+    cursor: not-allowed;
+  }
+
   .admin-fields input:focus,
   .admin-fields select:focus,
-  .admin-fields textarea:focus,
+  .admin-auth-form input:focus,
+  .admin-writing-head input:focus,
   .admin-media-item input:focus {
     border-color: hsl(var(--primary) / 0.7);
     box-shadow: 0 0 0 3px hsl(var(--primary) / 0.13);
-  }
-
-  .admin-fields textarea {
-    min-height: 15rem;
-    resize: vertical;
-    font:
-      15px/1.55 'JetBrains Mono',
-      ui-monospace,
-      monospace;
   }
 
   .admin-media-item img {
@@ -498,10 +969,27 @@ export const prerender = false
     display: grid;
   }
 
-  @media (max-width: 800px) {
-    .admin-grid,
+  @media (max-width: 900px) {
+    .admin-writing-head,
     .admin-media-grid {
       grid-template-columns: 1fr;
+    }
+
+    .admin-panes[data-view='split'] {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-body,
+    .admin-preview-wrap {
+      height: 48vh;
+      min-height: 18rem;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .admin-toolbar {
+      align-items: flex-start;
+      flex-direction: column;
     }
 
     .admin-fields {
@@ -515,14 +1003,25 @@ export const prerender = false
 
     .admin-collection {
       justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .admin-auth-form {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-form-actions {
+      align-items: flex-start;
+      flex-direction: column;
     }
   }
 </style>
 
 <script>
   import { onPageLoad } from '@/lib/page-lifecycle'
+  import { marked } from 'marked'
 
-  onPageLoad(() => {
+  onPageLoad((signal) => {
     type ApiEnvelope<T> = {
       data?: T
       meta?: {
@@ -538,10 +1037,13 @@ export const prerender = false
     }
     type Locale = 'zh' | 'en'
     type Collection = 'posts' | 'notes'
+    type ViewMode = 'write' | 'split' | 'preview'
     type ApiRecord = {
       id?: string
       url?: string
+      path?: string
       title?: string
+      description?: string
       draft?: boolean
       tags?: string[]
       publishDate?: string
@@ -551,96 +1053,280 @@ export const prerender = false
       type?: string
       status?: string
     } & Record<string, unknown>
+    type Snapshot = {
+      collection: Collection
+      locale: Locale
+      id: string
+      editingId: string
+      title: string
+      description: string
+      tags: string
+      body: string
+      draft: boolean
+      publishDate: string
+      noteDate: string
+      format: string
+      noteType: string
+      noteStatus: string
+      savedAt: string
+    }
+
+    const TOKEN_KEY = 'jayluo-admin-token'
+    const AUTOSAVE_PREFIX = 'jayluo-admin-autosave:'
+    const VIEW_KEY = 'jayluo-admin-view'
+    const API_BASE = '/api/v1/'
+    const TITLE_MAX = 60
+    const DESCRIPTION_MAX = 160
 
     const errorMessage = (error: unknown) =>
       error instanceof Error ? error.message : String(error)
-
-    const app = document.querySelector<HTMLElement>('main.admin-page')
-    const authForm = document.querySelector<HTMLFormElement>('#admin-auth')
-    const authStatus = document.querySelector<HTMLElement>('#admin-auth-status')
-    const authInput = document.querySelector<HTMLInputElement>('#admin-token')
-    const listPanel = document.querySelector<HTMLElement>('#admin-list')
-    const refreshButton = document.querySelector<HTMLButtonElement>('#admin-refresh')
-    const resultPanel = document.querySelector<HTMLElement>('#admin-result')
-    const form = document.querySelector<HTMLFormElement>('#admin-form')
-    const formTitle = document.querySelector<HTMLElement>('#admin-form-title')
-    const formContext = document.querySelector<HTMLElement>('#admin-form-context')
-    const fields = {
-      id: form?.querySelector<HTMLInputElement>('#admin-id'),
-      locale: form?.querySelector<HTMLSelectElement>('#admin-locale'),
-      publishDate: form?.querySelector<HTMLInputElement>('#admin-publish-date'),
-      noteDate: form?.querySelector<HTMLInputElement>('#admin-date'),
-      title: form?.querySelector<HTMLInputElement>('#admin-title'),
-      description: form?.querySelector<HTMLInputElement>('#admin-description'),
-      tags: form?.querySelector<HTMLInputElement>('#admin-tags'),
-      noteType: form?.querySelector<HTMLSelectElement>('#admin-note-type'),
-      noteStatus: form?.querySelector<HTMLSelectElement>('#admin-note-status'),
-      format: form?.querySelector<HTMLSelectElement>('#admin-format'),
-      body: form?.querySelector<HTMLTextAreaElement>('#admin-body'),
-      draft: form?.querySelector<HTMLInputElement>('#admin-draft'),
-      submit: form?.querySelector<HTMLButtonElement>('#admin-submit'),
-      reset: form?.querySelector<HTMLButtonElement>('#admin-reset')
+    function $<T extends Element>(selector: string) {
+      return document.querySelector<T>(selector)
     }
-    const mediaForm = document.querySelector<HTMLFormElement>('#media-form')
-    const mediaKeyInput = document.querySelector<HTMLInputElement>('#media-key')
-    const avatarForm = document.querySelector<HTMLFormElement>('#avatar-form')
+
+    const app = $<HTMLElement>('main.admin-page')
+    const authDetails = $<HTMLDetailsElement>('#admin-auth')
+    const authForm = $<HTMLFormElement>('#admin-auth-form')
+    const authStatus = $<HTMLElement>('#admin-auth-status')
+    const authInput = $<HTMLInputElement>('#admin-token')
+    const authBadge = $<HTMLElement>('#admin-auth-badge')
+    const connectionBadge = $<HTMLElement>('#admin-connection')
+    const listPanel = $<HTMLElement>('#admin-list')
+    const listTitle = $<HTMLElement>('#admin-list-title')
+    const refreshButton = $<HTMLButtonElement>('#admin-refresh')
+    const resultPanel = $<HTMLElement>('#admin-result')
+    const form = $<HTMLFormElement>('#admin-form')
+    const formTitle = $<HTMLElement>('#admin-form-title')
+    const formContext = $<HTMLElement>('#admin-form-context')
+    const draftChip = $<HTMLElement>('#admin-draft-chip')
+    const titleCount = $<HTMLElement>('#admin-title-count')
+    const descriptionCount = $<HTMLElement>('#admin-desc-count')
+    const bodyStats = $<HTMLElement>('#admin-body-stats')
+    const panes = $<HTMLElement>('#admin-panes')
+    const previewPanel = $<HTMLElement>('#admin-preview')
+    const autosaveBar = $<HTMLElement>('#admin-autosave')
+    const autosaveText = $<HTMLElement>('#admin-autosave-text')
+    const autosaveRestore = $<HTMLButtonElement>('#admin-autosave-restore')
+    const autosaveDiscard = $<HTMLButtonElement>('#admin-autosave-discard')
+    const settingsTitle = $<HTMLElement>('#admin-settings-title')
+    const settingsHint = $<HTMLElement>('#admin-settings-hint')
+    const localeHint = $<HTMLElement>('#admin-locale-hint')
+    const fields = {
+      id: $<HTMLInputElement>('#admin-id'),
+      locale: $<HTMLSelectElement>('#admin-locale'),
+      publishDate: $<HTMLInputElement>('#admin-publish-date'),
+      noteDate: $<HTMLInputElement>('#admin-date'),
+      title: $<HTMLInputElement>('#admin-title'),
+      description: $<HTMLInputElement>('#admin-description'),
+      tags: $<HTMLInputElement>('#admin-tags'),
+      noteType: $<HTMLSelectElement>('#admin-note-type'),
+      noteStatus: $<HTMLSelectElement>('#admin-note-status'),
+      format: $<HTMLSelectElement>('#admin-format'),
+      body: $<HTMLTextAreaElement>('#admin-body'),
+      draft: $<HTMLInputElement>('#admin-draft'),
+      submit: $<HTMLButtonElement>('#admin-submit'),
+      reset: $<HTMLButtonElement>('#admin-reset')
+    }
+    const mediaForm = $<HTMLFormElement>('#media-form')
+    const mediaKeyInput = $<HTMLInputElement>('#media-key')
+    const avatarForm = $<HTMLFormElement>('#avatar-form')
+    const viewButtons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('button[data-view]')
+    )
+    const markdownButtons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('button[data-md]')
+    )
+    const collectionButtons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('button[data-collection]')
+    )
+
+    if (!app || !form) return
+
     const resultMeta = document.createElement('p')
     resultMeta.className = 'admin-result-meta'
     resultPanel?.append(resultMeta)
 
-    const TOKEN_KEY = 'jayluo-admin-token'
-    const localeCode = (locale: Locale) => (locale === 'en' ? 'en' : 'zh')
-    const normalizeId = (id: string) => id.toLocaleLowerCase().replace(/\s+/g, '-').slice(0, 88)
-    const sanitizeToken = (value: string) => value.trim()
     let token = ''
     let collection: Collection = 'posts'
     let editingId = ''
     let loadedLocale: Locale = 'zh'
-    let timer = 0
+    let resultTimer = 0
+    let previewTimer = 0
+    let autosaveTimer = 0
+    let listRequest = 0
+    let savedSnapshot: Snapshot | null = null
+    let currentAutosaveKey = ''
+
+    marked.setOptions({ gfm: true, breaks: false })
+
+    const localeCode = (locale: Locale) => (locale === 'en' ? 'en' : 'zh')
+    const sanitizeToken = (value: string) => value.trim()
+    const charCount = (value: string) => [...value].length
+
+    function limitText(value: string, max: number) {
+      let result = ''
+      for (const char of value) {
+        if ((result + char).length > max) break
+        result += char
+      }
+      return result.trim()
+    }
+    const today = () =>
+      new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10)
+
+    function normalizeId(value: string) {
+      return value
+        .toLocaleLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/^-+/, '')
+        .slice(0, 88)
+    }
+
+    function slugifyTitle(value: string) {
+      return value
+        .toLocaleLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40)
+        .replace(/-+$/g, '')
+    }
+
+    function randomSuffix() {
+      return Math.random().toString(36).slice(2, 6)
+    }
+
+    function ensureId() {
+      const current = normalizeId(fields.id?.value ?? '').replace(/-+$/, '')
+      if (current) {
+        if (fields.id) fields.id.value = current
+        return current
+      }
+      const stamp = today().replace(/-/g, '')
+      const slug = slugifyTitle(fields.title?.value ?? '')
+      const fallback =
+        collection === 'posts'
+          ? `${stamp}---post-${randomSuffix()}`
+          : `note-${stamp}-${randomSuffix()}`
+      const generated =
+        collection === 'posts' ? (slug ? `${stamp}---${slug}` : fallback) : slug || fallback
+      if (fields.id) fields.id.value = generated
+      return generated
+    }
 
     function collectionLabel(value: Collection = collection) {
       return value === 'posts' ? '文章' : '笔记'
     }
 
-    function today() {
-      return new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
-        .toISOString()
-        .slice(0, 10)
+    function setConnection(state: 'idle' | 'connecting' | 'ok' | 'warn' | 'error', text: string) {
+      for (const badge of [connectionBadge, authBadge]) {
+        if (!badge) continue
+        badge.textContent = text
+        badge.dataset.state = state
+      }
     }
 
     function patchHeader() {
-      if (formTitle) formTitle.textContent = `${editingId ? '编辑' : '创建'}${collectionLabel()}`
+      if (formTitle) formTitle.textContent = `${editingId ? '编辑' : '写'}${collectionLabel()}`
+      if (listTitle) listTitle.textContent = `${collectionLabel()}列表`
+      if (settingsTitle) settingsTitle.textContent = `${collectionLabel()}设置`
+      if (settingsHint) {
+        settingsHint.textContent =
+          collection === 'posts'
+            ? 'URL ID、日期、语言、标签、格式'
+            : 'URL ID、日期、语言、标签、类型、格式'
+      }
+      if (fields.description) {
+        fields.description.placeholder =
+          collection === 'posts'
+            ? '一句话说清楚这篇内容（留空会自动取正文开头）'
+            : '一句话说清楚这则笔记（可选）'
+      }
+      if (localeHint) localeHint.textContent = editingId ? '编辑时固定' : '镜像用同一 ID'
+      if (fields.locale) {
+        fields.locale.disabled = Boolean(editingId)
+        fields.locale.title = editingId ? '编辑现有内容时语言固定' : ''
+      }
+      syncDraftUi()
+    }
+
+    function syncDraftUi() {
+      const draft = Boolean(fields.draft?.checked)
+      if (draftChip) {
+        draftChip.textContent = draft ? '草稿' : '已发布'
+        draftChip.classList.toggle('admin-chip-draft', draft)
+        draftChip.classList.toggle('admin-chip-published', !draft)
+      }
+      if (fields.submit) {
+        fields.submit.textContent = draft ? '保存草稿' : '保存并发布'
+      }
+    }
+
+    function updateCounters() {
+      const titleLength = charCount(fields.title?.value ?? '')
+      const descriptionLength = charCount(fields.description?.value ?? '')
+      if (titleCount) {
+        titleCount.textContent = `${titleLength} / ${TITLE_MAX}`
+        titleCount.classList.toggle('is-near', titleLength >= TITLE_MAX - 10)
+        titleCount.classList.toggle('is-over', titleLength > TITLE_MAX)
+      }
+      if (descriptionCount) {
+        descriptionCount.textContent = `${descriptionLength} / ${DESCRIPTION_MAX}`
+        descriptionCount.classList.toggle('is-near', descriptionLength >= DESCRIPTION_MAX - 20)
+        descriptionCount.classList.toggle('is-over', descriptionLength > DESCRIPTION_MAX)
+      }
+      if (bodyStats) {
+        const body = fields.body?.value ?? ''
+        const cjk = body.match(/[\u3400-\u9fff]/g)?.length ?? 0
+        const latin = body.replace(/[\u3400-\u9fff]/g, ' ').match(/[A-Za-z0-9_'-]+/g)?.length ?? 0
+        const total = cjk + latin
+        const minutes = Math.max(1, Math.ceil(total / 400))
+        bodyStats.textContent = `${total} 字 · 约 ${minutes} 分钟`
+      }
     }
 
     function setCollection(selection: Collection, keepEditing = false) {
       collection = selection
       if (!keepEditing) editingId = ''
-      app?.querySelectorAll<HTMLButtonElement>('[data-collection]').forEach((button) => {
+      for (const button of collectionButtons) {
         button.classList.toggle('is-active', button.dataset.collection === selection)
-      })
+      }
       app?.querySelectorAll<HTMLElement>('[data-post-field]').forEach((field) => {
         field.hidden = selection !== 'posts'
       })
       app?.querySelectorAll<HTMLElement>('[data-note-field]').forEach((field) => {
         field.hidden = selection !== 'notes'
       })
+      if (fields.format && !editingId) {
+        fields.format.value = selection === 'posts' ? 'mdx' : 'md'
+      }
       patchHeader()
     }
 
     function resetForm() {
       editingId = ''
-      setCollection(collection, true)
       if (fields.id) fields.id.value = ''
       if (fields.title) fields.title.value = ''
       if (fields.description) fields.description.value = ''
       if (fields.tags) fields.tags.value = ''
       if (fields.body) fields.body.value = ''
-      if (fields.draft) fields.draft.checked = false
+      if (fields.draft) fields.draft.checked = true
       if (fields.publishDate) fields.publishDate.value = today()
       if (fields.noteDate) fields.noteDate.value = today()
-      if (formContext) formContext.textContent = ''
+      if (fields.noteType) fields.noteType.value = 'note'
+      if (fields.noteStatus) fields.noteStatus.value = 'in-progress'
+      if (fields.format) fields.format.value = collection === 'posts' ? 'mdx' : 'md'
+      if (fields.locale) fields.locale.value = loadedLocale
+      if (formContext) {
+        formContext.textContent = ''
+        formContext.hidden = true
+      }
       resultPanel?.replaceChildren(resultMeta)
+      updateCounters()
+      schedulePreview()
       patchHeader()
+      refreshAutosaveNotice()
     }
 
     function fillForm(record: ApiRecord) {
@@ -658,16 +1344,35 @@ export const prerender = false
       if (fields.body) fields.body.value = String(record.body ?? '')
       if (fields.publishDate) fields.publishDate.value = String(record.publishDate ?? today())
       if (fields.noteDate) fields.noteDate.value = String(record.date ?? today())
-      if (formContext)
-        formContext.textContent = `${loadedLocale} · ${String(record.id).slice(0, 56)}`
+      const extension = /\.(md|mdx)$/.exec(String(record.path ?? ''))?.[1]
+      if (fields.format && extension) fields.format.value = extension
+      if (formContext) {
+        formContext.textContent = `${localeCode(loadedLocale)} · ${String(record.id).slice(0, 56)}`
+        formContext.hidden = false
+      }
       resultPanel?.replaceChildren(resultMeta)
+      updateCounters()
+      schedulePreview()
       patchHeader()
+      refreshAutosaveNotice()
       form?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
 
     function saveToken(value: string) {
       token = sanitizeToken(value)
-      window.localStorage.setItem(TOKEN_KEY, token)
+      try {
+        window.localStorage.setItem(TOKEN_KEY, token)
+      } catch {
+        // The session still works when storage is unavailable.
+      }
+    }
+
+    function storedToken() {
+      try {
+        return sanitizeToken(window.localStorage.getItem(TOKEN_KEY) ?? '')
+      } catch {
+        return ''
+      }
     }
 
     function api(path: string, init: RequestInit = {}) {
@@ -676,20 +1381,28 @@ export const prerender = false
       if (init.body != null && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json')
       }
-      return fetch(new URL(path, window.location.origin), { ...init, headers })
+      const target = new URL(`${API_BASE}${path.replace(/^\/+/, '')}`, window.location.origin)
+      return fetch(target, { ...init, headers })
     }
 
     async function failMessage(response: Response) {
       try {
         const payload = (await response.json()) as ApiErrorEnvelope
         return payload.error?.message || payload.error?.code || `HTTP ${response.status}`
-      } catch {}
+      } catch {
+        // The response body was not JSON; fall back to the status code.
+      }
       return `HTTP ${response.status}`
     }
 
-    function showResult(message: string, meta?: { commit?: string; deployQueued?: boolean }) {
+    function showResult(
+      message: string,
+      meta?: { commit?: string; deployQueued?: boolean },
+      state: 'info' | 'success' | 'error' = 'info'
+    ) {
       if (!resultPanel) return
       resultPanel.replaceChildren()
+      resultPanel.dataset.state = state
       const text = document.createElement('span')
       text.textContent = message
       if (meta?.commit) {
@@ -699,17 +1412,19 @@ export const prerender = false
         text.append(details)
       }
       resultPanel.append(text)
-      window.clearTimeout(timer)
-      if (message.startsWith('HTTP') || message.includes('失败')) {
-        window.setTimeout(() => resultPanel.replaceChildren(), 4200)
+      window.clearTimeout(resultTimer)
+      if (state === 'error') {
+        resultTimer = window.setTimeout(() => resultPanel.replaceChildren(), 5200)
       }
     }
 
     function payload() {
       if (!fields.locale) return null
-      const locale = (fields.locale.value || loadedLocale || 'zh') as Locale
+      const locale = (editingId ? loadedLocale : fields.locale.value || 'zh') as Locale
+      const id = editingId || ensureId()
+      const description = fields.description?.value.trim() ?? ''
       const common = {
-        id: editingId || normalizeId(fields.id?.value ?? ''),
+        id,
         locale,
         title: fields.title?.value.trim(),
         tags: fields.tags?.value
@@ -722,7 +1437,7 @@ export const prerender = false
       if (collection === 'posts') {
         const value = {
           ...common,
-          description: fields.description?.value.trim(),
+          description,
           publishDate: fields.publishDate?.value || today(),
           format: fields.format?.value || 'mdx'
         }
@@ -732,7 +1447,7 @@ export const prerender = false
       }
       const value = {
         ...common,
-        description: fields.description?.value.trim() ?? '',
+        ...(description ? { description } : editingId ? { description: null } : {}),
         date: fields.noteDate?.value || today(),
         type: fields.noteType?.value || 'note',
         status: fields.noteStatus?.value || 'in-progress',
@@ -741,50 +1456,375 @@ export const prerender = false
       return locale === 'en' ? { ...value, language: 'en', translationKey: value.id } : value
     }
 
-    authForm?.addEventListener('submit', async (event) => {
-      event.preventDefault()
-      token = sanitizeToken(authInput?.value ?? '')
-      if (!token) {
-        if (authStatus) authStatus.textContent = '请先填入 token。'
+    function deriveDescription(body: string) {
+      let inCode = false
+      const parts: string[] = []
+      for (const line of body.split('\n')) {
+        const trimmed = line.trim()
+        if (!trimmed) continue
+        if (trimmed.startsWith('```')) {
+          inCode = !inCode
+          continue
+        }
+        if (inCode) continue
+        if (/^#{1,6}\s/.test(trimmed)) continue
+        if (/^!\[/.test(trimmed)) continue
+        parts.push(trimmed)
+        if (parts.join(' ').length >= DESCRIPTION_MAX + 40) break
+      }
+      const text = parts
+        .join(' ')
+        .replace(/\[([^\]]*)]\([^)]*\)/g, '$1')
+        .replace(/[*_`>#~-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+      return limitText(text, DESCRIPTION_MAX)
+    }
+
+    function validateForm() {
+      const title = fields.title?.value.trim() ?? ''
+      if (!title) {
+        showResult('请先写一个标题。', undefined, 'error')
+        fields.title?.focus()
+        return false
+      }
+      if (title.length > TITLE_MAX || charCount(title) > TITLE_MAX) {
+        showResult(`标题最多 ${TITLE_MAX} 字，请删减后再保存。`, undefined, 'error')
+        fields.title?.focus()
+        return false
+      }
+      const description = fields.description?.value.trim() ?? ''
+      if (description.length > DESCRIPTION_MAX || charCount(description) > DESCRIPTION_MAX) {
+        showResult(`摘要最多 ${DESCRIPTION_MAX} 字，请删减后再保存。`, undefined, 'error')
+        fields.description?.focus()
+        return false
+      }
+      if (collection === 'posts' && !description) {
+        const generated =
+          deriveDescription(fields.body?.value ?? '') || limitText(title, DESCRIPTION_MAX)
+        if (!generated) {
+          showResult('请写一句摘要，或先写正文以便自动生成。', undefined, 'error')
+          fields.description?.focus()
+          return false
+        }
+        if (fields.description) fields.description.value = generated
+        updateCounters()
+      }
+      if (!editingId && loadedLocale === 'en' && !normalizeId(fields.id?.value ?? '')) {
+        showResult(
+          '英文内容需要填写与中文内容相同的 URL ID，才能成为翻译镜像。',
+          undefined,
+          'error'
+        )
+        const details = document.querySelector<HTMLDetailsElement>('.admin-settings')
+        if (details) details.open = true
+        fields.id?.focus()
+        return false
+      }
+      const id = ensureId()
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) {
+        showResult('URL ID 只能使用小写字母、数字和连字符。', undefined, 'error')
+        if (fields.id) {
+          const details = document.querySelector<HTMLDetailsElement>('.admin-settings')
+          if (details) details.open = true
+          fields.id.focus()
+        }
+        return false
+      }
+      return true
+    }
+
+    function renderPreview() {
+      if (!previewPanel) return
+      const source = fields.body?.value ?? ''
+      if (!source.trim()) {
+        previewPanel.replaceChildren()
+        const empty = document.createElement('p')
+        empty.className = 'admin-preview-empty'
+        empty.textContent = '预览会显示在这里。'
+        previewPanel.append(empty)
         return
       }
-      if (authStatus) authStatus.textContent = '正在校验...'
       try {
-        const response = await api('health')
-        if (!response.ok) throw new Error(await failMessage(response))
-        saveToken(token)
-        const health = (await response.json()) as ApiEnvelope<{
-          capabilities?: Record<string, boolean>
-        }>
-        const capabilities = health.data?.capabilities
-        if (authStatus)
-          authStatus.textContent =
-            capabilities?.contentCrud && capabilities.media
-              ? '已连接。'
-              : '已连接，但部分能力未启用。'
-        if (authInput) authInput.value = ''
-        resetForm()
-        await loadList(loadedLocale)
-      } catch (error) {
-        if (authStatus) authStatus.textContent = `连接失败 ${errorMessage(error)}`
+        const html = marked.parse(source, { async: false }) as string
+        previewPanel.replaceChildren(...sanitizePreview(html))
+      } catch {
+        previewPanel.replaceChildren()
+        const failed = document.createElement('p')
+        failed.className = 'admin-preview-empty'
+        failed.textContent = '预览渲染失败，正文仍然可以正常保存。'
+        previewPanel.append(failed)
       }
-    })
+    }
 
-    app?.querySelectorAll<HTMLButtonElement>('[data-collection]').forEach((button) => {
-      button.addEventListener('click', () => {
-        resetForm()
-        setCollection(button.dataset.collection as Collection, false)
-        patchHeader()
-        if (token) loadList(loadedLocale)
+    function sanitizePreview(html: string) {
+      const doc = new DOMParser().parseFromString(html, 'text/html')
+      const blocked =
+        'script, style, iframe, object, embed, link, meta, form, input, textarea, select, button, base'
+      doc.body.querySelectorAll(blocked).forEach((node) => node.remove())
+      doc.body.querySelectorAll<HTMLElement>('*').forEach((element) => {
+        for (const attribute of Array.from(element.attributes)) {
+          const name = attribute.name.toLowerCase()
+          if (name.startsWith('on') || name === 'srcdoc' || name === 'formaction') {
+            element.removeAttribute(attribute.name)
+            continue
+          }
+          if (
+            (name === 'href' || name === 'src' || name === 'xlink:href') &&
+            /^\s*(?:javascript|vbscript):/i.test(attribute.value)
+          ) {
+            element.removeAttribute(attribute.name)
+          }
+          if (
+            name === 'src' &&
+            /^\s*data:/i.test(attribute.value) &&
+            !/^data:image\//i.test(attribute.value)
+          ) {
+            element.removeAttribute(attribute.name)
+          }
+        }
+        if (element.tagName === 'A') {
+          element.setAttribute('target', '_blank')
+          element.setAttribute('rel', 'noopener noreferrer')
+        }
       })
-    })
+      return Array.from(doc.body.childNodes)
+    }
+
+    function schedulePreview() {
+      window.clearTimeout(previewTimer)
+      // In write-only mode the preview is hidden; render it when the user
+      // switches back instead of parsing large drafts on every pause.
+      if (panes?.dataset.view === 'write') return
+      previewTimer = window.setTimeout(renderPreview, 120)
+    }
+
+    function setView(mode: ViewMode, persist = true) {
+      if (!panes) return
+      panes.dataset.view = mode
+      for (const button of viewButtons) {
+        button.classList.toggle('is-active', button.dataset.view === mode)
+      }
+      if (persist) {
+        try {
+          window.localStorage.setItem(VIEW_KEY, mode)
+        } catch {
+          // localStorage can be unavailable in private browsing.
+        }
+      }
+      if (mode !== 'write') renderPreview()
+    }
+
+    function preferredView(): ViewMode {
+      try {
+        const saved = window.localStorage.getItem(VIEW_KEY)
+        if (saved === 'write' || saved === 'split' || saved === 'preview') return saved
+      } catch {
+        // Ignore unreadable preferences and fall back to the viewport.
+      }
+      return window.matchMedia('(min-width: 1000px)').matches ? 'split' : 'write'
+    }
+
+    function applyMarkdown(action: string) {
+      const textarea = fields.body
+      if (!textarea) return
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const selected = textarea.value.slice(start, end)
+
+      if (action === 'heading' || action === 'quote' || action === 'list') {
+        const prefix = action === 'heading' ? '## ' : action === 'quote' ? '> ' : '- '
+        const value = textarea.value
+        const lineStart = value.lastIndexOf('\n', start - 1) + 1
+        const nextBreak = value.indexOf('\n', end)
+        const lineEnd = nextBreak === -1 ? value.length : nextBreak
+        const block = value.slice(lineStart, lineEnd)
+        const updated = block
+          .split('\n')
+          .map((line) => (line.trim() ? `${prefix}${line}` : line))
+          .join('\n')
+        textarea.setRangeText(updated, lineStart, lineEnd, 'select')
+      } else {
+        const [before, after, fallback] =
+          action === 'bold'
+            ? ['**', '**', '加粗文字']
+            : action === 'italic'
+              ? ['*', '*', '斜体文字']
+              : action === 'link'
+                ? ['[', '](https://)', '链接文字']
+                : ['`', '`', '代码']
+        const replacement = `${before}${selected || fallback}${after}`
+        textarea.setRangeText(replacement, start, end, 'end')
+        if (!selected) {
+          textarea.setSelectionRange(start + before.length, start + before.length + fallback.length)
+        }
+      }
+      textarea.focus()
+      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+      updateCounters()
+      schedulePreview()
+    }
+
+    function autosaveKey() {
+      return `${AUTOSAVE_PREFIX}${collection}:${loadedLocale}:${editingId || 'new'}`
+    }
+
+    function snapshotOfForm(): Snapshot {
+      return {
+        collection,
+        locale: loadedLocale,
+        id: fields.id?.value ?? '',
+        editingId,
+        title: fields.title?.value ?? '',
+        description: fields.description?.value ?? '',
+        tags: fields.tags?.value ?? '',
+        body: fields.body?.value ?? '',
+        draft: Boolean(fields.draft?.checked),
+        publishDate: fields.publishDate?.value ?? '',
+        noteDate: fields.noteDate?.value ?? '',
+        format: fields.format?.value ?? '',
+        noteType: fields.noteType?.value ?? '',
+        noteStatus: fields.noteStatus?.value ?? '',
+        savedAt: new Date().toISOString()
+      }
+    }
+
+    function snapshotHasContent(snapshot: Snapshot) {
+      const hasText = (value: unknown) => typeof value === 'string' && value.trim().length > 0
+      return (
+        hasText(snapshot.title) ||
+        hasText(snapshot.description) ||
+        hasText(snapshot.tags) ||
+        hasText(snapshot.body)
+      )
+    }
+
+    function snapshotMatchesForm(snapshot: Snapshot) {
+      return (
+        snapshot.id === (fields.id?.value ?? '') &&
+        snapshot.title === (fields.title?.value ?? '') &&
+        snapshot.description === (fields.description?.value ?? '') &&
+        snapshot.tags === (fields.tags?.value ?? '') &&
+        snapshot.body === (fields.body?.value ?? '') &&
+        snapshot.draft === Boolean(fields.draft?.checked) &&
+        snapshot.publishDate === (fields.publishDate?.value ?? '') &&
+        snapshot.noteDate === (fields.noteDate?.value ?? '') &&
+        snapshot.format === (fields.format?.value ?? '') &&
+        snapshot.noteType === (fields.noteType?.value ?? '') &&
+        snapshot.noteStatus === (fields.noteStatus?.value ?? '')
+      )
+    }
+
+    function readSnapshot(key: string): Snapshot | null {
+      try {
+        const raw = window.localStorage.getItem(key)
+        if (!raw) return null
+        const value = JSON.parse(raw) as Record<string, unknown>
+        if (!value || typeof value !== 'object') return null
+        const text = (entry: unknown) => (typeof entry === 'string' ? entry : '')
+        return {
+          collection: value.collection === 'notes' ? 'notes' : 'posts',
+          locale: value.locale === 'en' ? 'en' : 'zh',
+          id: text(value.id),
+          editingId: text(value.editingId),
+          title: text(value.title),
+          description: text(value.description),
+          tags: text(value.tags),
+          body: text(value.body),
+          draft: Boolean(value.draft),
+          publishDate: text(value.publishDate),
+          noteDate: text(value.noteDate),
+          format: text(value.format),
+          noteType: text(value.noteType),
+          noteStatus: text(value.noteStatus),
+          savedAt: text(value.savedAt)
+        }
+      } catch {
+        try {
+          window.localStorage.removeItem(key)
+        } catch {
+          // Storage may be unavailable; ignore the corrupt snapshot.
+        }
+        return null
+      }
+    }
+
+    function persistAutosave() {
+      if (!form) return
+      const snapshot = snapshotOfForm()
+      const key = autosaveKey()
+      // Never delete an older snapshot just because the form is momentarily
+      // empty; the user may still want to restore it.
+      if (!snapshotHasContent(snapshot)) return
+      try {
+        window.localStorage.setItem(key, JSON.stringify(snapshot))
+      } catch {
+        // Ignore quota or privacy-mode failures; saving to the server still works.
+      }
+    }
+
+    function clearAutosave(key = autosaveKey()) {
+      try {
+        window.localStorage.removeItem(key)
+      } catch {
+        // Nothing to clear if storage is unavailable.
+      }
+    }
+
+    function queueAutosave() {
+      window.clearTimeout(autosaveTimer)
+      autosaveTimer = window.setTimeout(persistAutosave, 900)
+    }
+
+    function relativeTime(value: string) {
+      const timestamp = Date.parse(value)
+      if (!Number.isFinite(timestamp)) return '刚刚'
+      const minutes = Math.max(0, Math.round((Date.now() - timestamp) / 60_000))
+      if (minutes < 1) return '刚刚'
+      if (minutes < 60) return `${minutes} 分钟前`
+      const hours = Math.round(minutes / 60)
+      if (hours < 24) return `${hours} 小时前`
+      return `${Math.round(hours / 24)} 天前`
+    }
+
+    function refreshAutosaveNotice() {
+      if (!autosaveBar) return
+      currentAutosaveKey = autosaveKey()
+      const snapshot = readSnapshot(currentAutosaveKey)
+      savedSnapshot = null
+      if (!snapshot || !snapshotHasContent(snapshot) || snapshotMatchesForm(snapshot)) {
+        autosaveBar.hidden = true
+        return
+      }
+      savedSnapshot = snapshot
+      if (autosaveText) {
+        autosaveText.textContent = `发现 ${relativeTime(snapshot.savedAt)} 的本机自动保存。`
+      }
+      autosaveBar.hidden = false
+    }
+
+    function applySnapshot(snapshot: Snapshot) {
+      if (fields.id) fields.id.value = snapshot.id
+      if (fields.title) fields.title.value = snapshot.title
+      if (fields.description) fields.description.value = snapshot.description
+      if (fields.tags) fields.tags.value = snapshot.tags
+      if (fields.body) fields.body.value = snapshot.body
+      if (fields.draft) fields.draft.checked = snapshot.draft
+      if (fields.publishDate && snapshot.publishDate)
+        fields.publishDate.value = snapshot.publishDate
+      if (fields.noteDate && snapshot.noteDate) fields.noteDate.value = snapshot.noteDate
+      if (fields.format && snapshot.format) fields.format.value = snapshot.format
+      if (fields.noteType && snapshot.noteType) fields.noteType.value = snapshot.noteType
+      if (fields.noteStatus && snapshot.noteStatus) fields.noteStatus.value = snapshot.noteStatus
+      updateCounters()
+      schedulePreview()
+      patchHeader()
+    }
 
     async function loadList(locale: Locale = loadedLocale) {
       if (!token || !listPanel) return
+      const requestId = ++listRequest
       if (refreshButton) refreshButton.disabled = true
-      const link = new URL(collection, window.location.origin)
-      link.searchParams.set('limit', '50')
-      link.searchParams.set('drafts', 'all')
       listPanel.replaceChildren()
       const loading = document.createElement('p')
       loading.className = 'admin-status'
@@ -795,14 +1835,15 @@ export const prerender = false
           locale,
           limit: '50',
           offset: '0',
-          drafts: 'all',
+          draft: 'all',
           includeBody: 'false'
         })
-        const response = await api(`/${collection}?${query.toString()}`)
+        const response = await api(`${collection}?${query.toString()}`)
         if (!response.ok) throw new Error(await failMessage(response))
         const result = (await response.json()) as ApiEnvelope<ApiRecord[]>
+        if (requestId !== listRequest) return
         const records = result.data ?? []
-        listPanel.replaceChildren(...records.map((record) => addRecordRow(record, loadedLocale)))
+        listPanel.replaceChildren(...records.map((record) => addRecordRow(record, locale)))
         if (records.length === 0) {
           const empty = document.createElement('p')
           empty.className = 'admin-status'
@@ -810,9 +1851,10 @@ export const prerender = false
           listPanel.append(empty)
         }
       } catch (error) {
+        if (requestId !== listRequest) return
         loading.textContent = `加载失败 ${errorMessage(error)}`
       } finally {
-        if (refreshButton) refreshButton.disabled = false
+        if (requestId === listRequest && refreshButton) refreshButton.disabled = false
       }
     }
 
@@ -830,23 +1872,28 @@ export const prerender = false
       const row = document.createElement('article')
       row.className = 'admin-row'
       const info = document.createElement('div')
-      if (record.url) {
-        const link = document.createElement('a')
-        link.className = 'admin-row-title'
-        link.href = record.url
-        link.target = '_blank'
-        link.rel = 'noopener noreferrer'
-        link.textContent = String(record.title ?? record.id)
-        info.append(link)
+      const title = document.createElement(record.url ? 'a' : 'p')
+      title.className = 'admin-row-title'
+      if (record.url && title instanceof HTMLAnchorElement) {
+        title.href = record.url
+        title.target = '_blank'
+        title.rel = 'noopener noreferrer'
       }
+      title.append(String(record.title ?? record.id))
+      if (record.draft) {
+        const badge = document.createElement('span')
+        badge.className = 'admin-row-draft'
+        badge.textContent = '草稿'
+        title.append(badge)
+      }
+      info.append(title)
       const meta = document.createElement('p')
       meta.className = 'admin-row-meta'
       const date = record.publishDate ?? record.date
       meta.textContent = [
-        localeCode((record.locale ?? loadedLocale) as Locale),
+        localeCode((record.locale ?? locale) as Locale),
         String(record.id),
-        String(date ?? ''),
-        Boolean(record.draft) ? 'draft' : ''
+        String(date ?? '')
       ]
         .filter(Boolean)
         .join(' · ')
@@ -854,73 +1901,160 @@ export const prerender = false
       const actions = document.createElement('div')
       actions.className = 'admin-row-actions'
       button(actions, '编辑', async () => {
+        window.clearTimeout(autosaveTimer)
+        persistAutosave()
         try {
           const response = await api(
-            `/${collection}/${encodeURIComponent(String(record.id))}?locale=${locale}&includeBody=true`
+            `${collection}/${encodeURIComponent(String(record.id))}?locale=${locale}&includeBody=true`
           )
           if (!response.ok) throw new Error(await failMessage(response))
           const result = (await response.json()) as ApiEnvelope<ApiRecord>
           const content = result.data
           if (content) fillForm(content)
         } catch (error) {
-          showResult(`获取内容失败 ${errorMessage(error)}`)
+          showResult(`获取内容失败 ${errorMessage(error)}`, undefined, 'error')
         }
       })
       button(actions, '删除', async () => {
         if (!confirm('确定要删除这条内容?')) return
         try {
           const response = await api(
-            `/${collection}/${encodeURIComponent(String(record.id))}?locale=${locale}`,
+            `${collection}/${encodeURIComponent(String(record.id))}?locale=${locale}`,
             { method: 'DELETE' }
           )
           if (!response.ok) throw new Error(await failMessage(response))
+          clearAutosave(`${AUTOSAVE_PREFIX}${collection}:${locale}:${String(record.id)}`)
+          if (editingId === String(record.id)) resetForm()
           await loadList(locale)
-          showResult('已删除。')
+          showResult('已删除。', undefined, 'success')
         } catch (error) {
-          showResult(`删除失败 ${errorMessage(error)}`)
+          showResult(`删除失败 ${errorMessage(error)}`, undefined, 'error')
         }
       })
       row.append(info, actions)
       return row
     }
 
+    async function connectHealth(candidate: string) {
+      token = candidate
+      const response = await api('health')
+      if (!response.ok) throw new Error(await failMessage(response))
+      return (await response.json()) as ApiEnvelope<{
+        capabilities?: { contentCrud?: boolean; media?: boolean }
+      }>
+    }
+
+    authForm?.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      window.clearTimeout(autosaveTimer)
+      persistAutosave()
+      const candidate = sanitizeToken(authInput?.value ?? '')
+      if (!candidate) {
+        if (authStatus) authStatus.textContent = '请先填入 token。'
+        return
+      }
+      if (authStatus) authStatus.textContent = '正在校验...'
+      setConnection('connecting', '连接中…')
+      try {
+        const health = await connectHealth(candidate)
+        const contentCrud = Boolean(health.data?.capabilities?.contentCrud)
+        saveToken(candidate)
+        if (authInput) authInput.value = ''
+        if (contentCrud) {
+          setConnection('ok', '已连接')
+          if (authStatus) authStatus.textContent = '已连接。'
+          if (authDetails) authDetails.open = false
+          await loadList(loadedLocale)
+          fields.body?.focus()
+        } else {
+          setConnection('warn', '内容 CRUD 未启用')
+          if (authStatus)
+            authStatus.textContent =
+              '已连接，但服务端未启用内容 CRUD：请配置 CONTENT_API_TOKEN 与 GitHub 相关 secrets。'
+          if (authDetails) authDetails.open = true
+        }
+      } catch (error) {
+        token = ''
+        setConnection('error', '连接失败')
+        if (authStatus) authStatus.textContent = `连接失败 ${errorMessage(error)}`
+        if (authDetails) authDetails.open = true
+      }
+    })
+
+    for (const button of collectionButtons) {
+      button.addEventListener('click', () => {
+        const next = button.dataset.collection as Collection
+        if (next === collection) return
+        window.clearTimeout(autosaveTimer)
+        persistAutosave()
+        setCollection(next, false)
+        resetForm()
+        if (token) loadList(loadedLocale)
+        fields.body?.focus()
+      })
+    }
+
     form?.addEventListener('submit', async (event) => {
       event.preventDefault()
-      if (!form.checkValidity() || !token) return
+      if (!token) {
+        showResult('请先连接 Content API token。', undefined, 'error')
+        if (authDetails) authDetails.open = true
+        authInput?.focus()
+        return
+      }
+      if (!validateForm()) return
       const body = payload()
       if (!body?.id) return
+      const wasCreating = !editingId
+      const previousAutosaveKey = autosaveKey()
       const method = editingId ? 'PATCH' : 'POST'
       const path = editingId
-        ? `/${collection}/${encodeURIComponent(editingId)}?locale=${loadedLocale}`
-        : `/${collection}`
+        ? `${collection}/${encodeURIComponent(editingId)}?locale=${loadedLocale}`
+        : collection
       if (fields.submit) fields.submit.disabled = true
       showResult(editingId ? '更新中...' : '创建中...')
       try {
         const response = await api(path, { method, body: JSON.stringify(body) })
         if (!response.ok) throw new Error(await failMessage(response))
         const result = (await response.json()) as ApiEnvelope<ApiRecord>
-        editingId = String(result.data?.id ?? '')
         const record = result.data
         if (!record) throw new Error('接口响应缺少 data。')
+        editingId = String(record.id ?? '')
+        loadedLocale = (record.locale === 'en' ? 'en' : loadedLocale) as Locale
+        if (fields.locale) fields.locale.value = loadedLocale
+        if (formContext) {
+          formContext.textContent = `${localeCode(loadedLocale)} · ${record.id}`
+          formContext.hidden = false
+        }
+        window.clearTimeout(autosaveTimer)
+        clearAutosave(previousAutosaveKey)
+        clearAutosave()
+        if (autosaveBar) autosaveBar.hidden = true
         patchHeader()
-        if (formContext) formContext.textContent = `${loadedLocale} · ${record.id}`
-        showResult('内容已保存。', result.meta)
+        updateCounters()
+        const draft = Boolean(fields.draft?.checked)
+        showResult(
+          wasCreating ? (draft ? '草稿已保存。' : '内容已发布。') : '内容已保存。',
+          result.meta,
+          'success'
+        )
         await loadList(loadedLocale)
       } catch (error) {
-        showResult(`保存失败 ${errorMessage(error)}`)
+        showResult(`保存失败 ${errorMessage(error)}`, undefined, 'error')
       } finally {
         if (fields.submit) fields.submit.disabled = false
+        syncDraftUi()
       }
     })
 
     mediaForm?.addEventListener('submit', async (event) => {
       event.preventDefault()
-      const input = document.querySelector<HTMLInputElement>('#media-file')
+      const input = $<HTMLInputElement>('#media-file')
       if (!input?.files?.[0]) return
       const image = input.files[0]
       const formBody = new FormData()
       formBody.append('file', image)
-      const selectedKey = normalizeId(mediaKeyInput?.value ?? '')
+      const selectedKey = (mediaKeyInput?.value ?? '').trim().replace(/^\/+/, '')
       if (selectedKey) formBody.append('key', selectedKey)
       try {
         const response = await api('media', { method: 'POST', body: formBody })
@@ -931,20 +2065,20 @@ export const prerender = false
           path?: string
         }>
         const data = result.data
-        showResult('图片已上传。', result.meta)
+        showResult('图片已上传。', result.meta, 'success')
         if (mediaKeyInput && data) {
           mediaKeyInput.value = String(data.key ?? data.path ?? '')
         }
         if (data?.url) window.open(String(data.url), '_blank', 'noopener')
         input.value = ''
       } catch (error) {
-        showResult(`上传失败 ${errorMessage(error)}`)
+        showResult(`上传失败 ${errorMessage(error)}`, undefined, 'error')
       }
     })
 
     avatarForm?.addEventListener('submit', async (event) => {
       event.preventDefault()
-      const input = document.querySelector<HTMLInputElement>('#avatar-file')
+      const input = $<HTMLInputElement>('#avatar-file')
       if (!input?.files?.[0]) return
       const avatar = input.files[0]
       try {
@@ -954,25 +2088,25 @@ export const prerender = false
           headers: { 'content-type': avatar.type || 'application/octet-stream' }
         })
         if (!response.ok) throw new Error(await failMessage(response))
-        showResult('头像已更新。')
-        const preview = document.querySelector<HTMLImageElement>('#avatar-preview')
+        showResult('头像已更新。', undefined, 'success')
+        const preview = $<HTMLImageElement>('#avatar-preview')
         preview?.setAttribute('src', `/api/v1/avatar?t=${Date.now()}`)
         input.value = ''
       } catch (error) {
-        showResult(`头像更新失败 ${errorMessage(error)}`)
+        showResult(`头像更新失败 ${errorMessage(error)}`, undefined, 'error')
       }
     })
 
-    document.querySelector('#avatar-delete')?.addEventListener('click', async () => {
+    $<HTMLButtonElement>('#avatar-delete')?.addEventListener('click', async () => {
       if (!confirm('确定删除当前头像?')) return
       try {
         const response = await api('avatar', { method: 'DELETE' })
         if (!response.ok) throw new Error(await failMessage(response))
-        showResult('头像已删除。')
-        const preview = document.querySelector<HTMLImageElement>('#avatar-preview')
+        showResult('头像已删除。', undefined, 'success')
+        const preview = $<HTMLImageElement>('#avatar-preview')
         preview?.setAttribute('src', '/avatar-fallback.svg')
       } catch (error) {
-        showResult(`删除失败 ${errorMessage(error)}`)
+        showResult(`删除失败 ${errorMessage(error)}`, undefined, 'error')
       }
     })
 
@@ -982,37 +2116,159 @@ export const prerender = false
     })
 
     fields.locale?.addEventListener('change', () => {
+      window.clearTimeout(autosaveTimer)
+      persistAutosave()
       loadedLocale = (fields.locale?.value || 'zh') as Locale
+      if (loadedLocale === 'en') {
+        const details = document.querySelector<HTMLDetailsElement>('.admin-settings')
+        if (details) details.open = true
+      }
+      refreshAutosaveNotice()
       loadList(loadedLocale)
+    })
+
+    fields.draft?.addEventListener('change', syncDraftUi)
+
+    fields.title?.addEventListener('input', updateCounters)
+    fields.description?.addEventListener('input', updateCounters)
+    fields.body?.addEventListener('input', () => {
+      updateCounters()
+      schedulePreview()
+    })
+
+    fields.body?.addEventListener('scroll', () => {
+      if (panes?.dataset.view !== 'split' || !previewPanel) return
+      const textarea = fields.body
+      const wrap = previewPanel.parentElement
+      if (!textarea || !wrap) return
+      const ratio = textarea.scrollTop / Math.max(1, textarea.scrollHeight - textarea.clientHeight)
+      wrap.scrollTop = ratio * Math.max(0, wrap.scrollHeight - wrap.clientHeight)
+    })
+
+    const queueFormAutosave = (event: Event) => {
+      if (event.target === fields.locale) return
+      queueAutosave()
+    }
+    form?.addEventListener('input', queueFormAutosave)
+    form?.addEventListener('change', queueFormAutosave)
+
+    form?.addEventListener('keydown', (event) => {
+      if (!(event.metaKey || event.ctrlKey)) return
+      const key = event.key.toLowerCase()
+      if (key === 's' || (key === 'enter' && event.target === fields.body)) {
+        event.preventDefault()
+        form?.requestSubmit()
+        return
+      }
+      if (event.target !== fields.body) return
+      if (key === 'b' || key === 'i' || key === 'k') {
+        event.preventDefault()
+        applyMarkdown(key === 'b' ? 'bold' : key === 'i' ? 'italic' : 'link')
+      }
+    })
+
+    fields.body?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Tab' || event.metaKey || event.ctrlKey || event.altKey) return
+      event.preventDefault()
+      const textarea = fields.body
+      if (!textarea) return
+      textarea.setRangeText('  ', textarea.selectionStart, textarea.selectionEnd, 'end')
+      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    for (const button of viewButtons) {
+      button.addEventListener('click', () => {
+        const mode = button.dataset.view as ViewMode
+        if (mode === 'write' || mode === 'split' || mode === 'preview') setView(mode)
+      })
+    }
+
+    for (const button of markdownButtons) {
+      button.addEventListener('click', () => {
+        const action = button.dataset.md
+        if (action) applyMarkdown(action)
+      })
+    }
+
+    autosaveRestore?.addEventListener('click', () => {
+      if (!savedSnapshot) return
+      applySnapshot(savedSnapshot)
+      if (autosaveBar) autosaveBar.hidden = true
+      showResult('已恢复本机自动保存。', undefined, 'success')
+      fields.body?.focus()
+    })
+
+    autosaveDiscard?.addEventListener('click', () => {
+      if (currentAutosaveKey) clearAutosave(currentAutosaveKey)
+      savedSnapshot = null
+      if (autosaveBar) autosaveBar.hidden = true
+    })
+
+    fields.reset?.addEventListener('click', () => {
+      window.clearTimeout(autosaveTimer)
+      persistAutosave()
+      resetForm()
+      // Keep the abandoned draft recoverable after a reload, but don't offer to
+      // restore the content the user just chose to leave.
+      if (autosaveBar) autosaveBar.hidden = true
+      savedSnapshot = null
+      fields.title?.focus()
     })
 
     refreshButton?.addEventListener('click', () => loadList(loadedLocale))
 
-    fields.reset?.addEventListener('click', resetForm)
-
     const start = async () => {
-      if (!app || !authForm || !form) return
-      setCollection('posts')
+      setCollection('posts', false)
       loadedLocale = 'zh'
       resetForm()
-      const saved = sanitizeToken(window.localStorage.getItem(TOKEN_KEY) ?? '')
-      if (!saved) return
+      setView(preferredView(), false)
+      updateCounters()
+      renderPreview()
+
+      const saved = storedToken()
+      if (!saved) {
+        setConnection('idle', '未连接')
+        if (authStatus) authStatus.textContent = 'Token 只保存在当前浏览器的 localStorage。'
+        return
+      }
+
       token = saved
+      setConnection('connecting', '连接中…')
       if (authStatus) authStatus.textContent = '正在使用保存的 token 校验...'
       try {
         const response = await api('health')
-        if (response.ok) {
+        if (!response.ok) throw new Error(await failMessage(response))
+        const health = (await response.json()) as ApiEnvelope<{
+          capabilities?: { contentCrud?: boolean; media?: boolean }
+        }>
+        const contentCrud = Boolean(health.data?.capabilities?.contentCrud)
+        if (contentCrud) {
+          setConnection('ok', '已连接')
           if (authStatus) authStatus.textContent = '已连接。'
-          await loadList()
+          if (authDetails) authDetails.open = false
+          await loadList(loadedLocale)
+          fields.body?.focus()
         } else {
+          setConnection('warn', '内容 CRUD 未启用')
           if (authStatus)
-            authStatus.textContent = `保存的 token 失效 ${await failMessage(response)}`
+            authStatus.textContent =
+              '已连接，但服务端未启用内容 CRUD：请配置 CONTENT_API_TOKEN 与 GitHub 相关 secrets。'
+          if (authDetails) authDetails.open = true
         }
       } catch (error) {
-        if (authStatus) authStatus.textContent = `连接失败 ${errorMessage(error)}`
+        token = ''
+        setConnection('error', '连接失败')
+        if (authStatus) authStatus.textContent = `保存的 token 失效 ${errorMessage(error)}`
+        if (authDetails) authDetails.open = true
       }
-      if (authInput) authInput.value = ''
     }
+
+    signal.addEventListener('abort', () => {
+      window.clearTimeout(resultTimer)
+      window.clearTimeout(previewTimer)
+      window.clearTimeout(autosaveTimer)
+      persistAutosave()
+    })
 
     start()
   })
