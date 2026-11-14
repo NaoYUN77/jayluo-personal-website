@@ -1,4 +1,6 @@
 ---
+import 'katex/dist/katex.min.css'
+
 import BaseLayout from '@/layouts/BaseLayout.astro'
 
 export const prerender = false
@@ -51,12 +53,12 @@ export const prerender = false
           <span id='admin-form-context' class='admin-chip' hidden></span>
           <span id='admin-draft-chip' class='admin-chip admin-chip-draft'>草稿</span>
         </div>
-        <div class='admin-collection' role='group' aria-label='内容类型'>
+        <div class='admin-collection' role='group' aria-label='文章归属'>
           <button class='admin-btn admin-btn-ghost is-active' type='button' data-collection='posts'>
-            文章
+            blog
           </button>
           <button class='admin-btn admin-btn-ghost' type='button' data-collection='notes'>
-            笔记
+            notes
           </button>
           <button class='admin-btn admin-btn-ghost' type='button' id='admin-refresh'>
             刷新列表
@@ -117,14 +119,55 @@ export const prerender = false
             <button type='button' data-view='split' class='is-active'>分栏</button>
             <button type='button' data-view='preview'>预览</button>
           </div>
-          <div class='admin-editor-tools' role='group' aria-label='Markdown 快捷工具'>
-            <button type='button' data-md='bold' title='加粗（Ctrl/Cmd + B）'>B</button>
-            <button type='button' data-md='italic' title='斜体（Ctrl/Cmd + I）'><em>I</em></button>
-            <button type='button' data-md='heading' title='二级标题'>H2</button>
-            <button type='button' data-md='link' title='链接（Ctrl/Cmd + K）'>链接</button>
-            <button type='button' data-md='code' title='行内代码'>代码</button>
-            <button type='button' data-md='quote' title='引用'>引用</button>
-            <button type='button' data-md='list' title='无序列表'>列表</button>
+          <div class='admin-editor-tools' role='toolbar' aria-label='Markdown 快捷工具'>
+            <div class='admin-tool-group' role='group' aria-label='撤销与重做'>
+              <button type='button' data-md='undo' title='撤销（Ctrl/Cmd + Z）' aria-label='撤销'>
+                ↶
+              </button>
+              <button
+                type='button'
+                data-md='redo'
+                title='重做（Ctrl/Cmd + Shift + Z）'
+                aria-label='重做'
+              >
+                ↷
+              </button>
+            </div>
+            <div class='admin-tool-group' role='group' aria-label='标题'>
+              <button type='button' data-md='h1' title='一级标题（Ctrl/Cmd + Alt + 1）'>H1</button>
+              <button type='button' data-md='h2' title='二级标题（Ctrl/Cmd + Alt + 2）'>H2</button>
+              <button type='button' data-md='h3' title='三级标题（Ctrl/Cmd + Alt + 3）'>H3</button>
+            </div>
+            <div class='admin-tool-group' role='group' aria-label='文字样式'>
+              <button type='button' data-md='bold' title='加粗（Ctrl/Cmd + B）'>B</button>
+              <button type='button' data-md='italic' title='斜体（Ctrl/Cmd + I）'><em>I</em></button
+              >
+              <button type='button' data-md='underline' title='下划线（插入 HTML <u> 标签）'>
+                <u>U</u>
+              </button>
+              <button type='button' data-md='strike' title='删除线（Ctrl/Cmd + Shift + X）'>
+                <s>S</s>
+              </button>
+            </div>
+            <div class='admin-tool-group' role='group' aria-label='插入'>
+              <button type='button' data-md='link' title='链接（Ctrl/Cmd + K）'>链接</button>
+              <button type='button' data-md='image' title='插入图片（使用图片 URL）'>图片</button>
+              <button type='button' data-md='code' title='行内代码'>代码</button>
+              <button type='button' data-md='codeblock' title='代码块（可在 ``` 后输入语言）'>
+                代码块
+              </button>
+              <button type='button' data-md='math' title='行内公式（$...$）'>$x$</button>
+              <button type='button' data-md='mathblock' title='块级公式（$$...$$）'>$$x$$</button>
+            </div>
+            <div class='admin-tool-group' role='group' aria-label='列表与块'>
+              <button type='button' data-md='ul' title='无序列表（Ctrl/Cmd + Shift + 8）'>•</button>
+              <button type='button' data-md='ol' title='有序列表（Ctrl/Cmd + Shift + 7）'>1.</button
+              >
+              <button type='button' data-md='quote' title='引用（Ctrl/Cmd + Shift + .）'
+                >引用</button
+              >
+              <button type='button' data-md='hr' title='分割线'>分割线</button>
+            </div>
           </div>
           <span id='admin-body-stats' class='admin-body-stats'>0 字 · 约 1 分钟</span>
         </div>
@@ -221,11 +264,28 @@ export const prerender = false
             </label>
 
             <label class='admin-field'>
+              <span class='admin-field-label'>
+                <span>文章归属</span>
+                <span class='admin-limit'>blog / notes</span>
+              </span>
+              <select id='admin-ownership'>
+                <option value='blog'>blog</option>
+                <option value='notes'>notes</option>
+              </select>
+              <small id='admin-ownership-hint' class='admin-hint'>
+                blog 发布到 /blog，notes 发布到 /notes。切换归属会新建对应类型的内容。
+              </small>
+            </label>
+
+            <label class='admin-field'>
               <span>格式</span>
               <select id='admin-format'>
                 <option value='mdx'>Markdown MDX</option>
                 <option value='md'>Plain Markdown</option>
               </select>
+              <small id='admin-format-hint' class='admin-hint'
+                >blog 默认 MDX，notes 默认 Markdown。</small
+              >
             </label>
           </div>
         </details>
@@ -540,12 +600,30 @@ export const prerender = false
     flex-wrap: wrap;
   }
 
-  .admin-view-switch,
-  .admin-editor-tools {
+  .admin-view-switch {
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
     padding: 0.2rem;
+    border: 1px solid hsl(var(--glass-edge));
+    border-radius: 10px;
+    background: hsl(var(--glass-panel-fallback) / 0.3);
+  }
+
+  .admin-editor-tools {
+    display: flex;
+    align-items: center;
+    flex: 1 1 100%;
+    order: 3;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  .admin-tool-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.12rem;
+    padding: 0.16rem;
     border: 1px solid hsl(var(--glass-edge));
     border-radius: 10px;
     background: hsl(var(--glass-panel-fallback) / 0.3);
@@ -579,8 +657,14 @@ export const prerender = false
   }
 
   .admin-editor-tools button {
-    min-width: 2rem;
+    min-width: 1.85rem;
+    padding-inline: 0.45rem;
     font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  .admin-editor-tools button u,
+  .admin-editor-tools button s {
+    text-underline-offset: 0.14em;
   }
 
   .admin-body-stats {
@@ -654,6 +738,20 @@ export const prerender = false
 
   .admin-preview :global(img) {
     max-width: 100%;
+  }
+
+  .admin-preview :global(.katex-display) {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-block: 0.35rem;
+  }
+
+  .admin-preview :global(.katex) {
+    font-size: 1.04em;
+  }
+
+  .admin-preview :global(.math-block) {
+    overflow-x: auto;
   }
 
   .admin-preview-empty {
@@ -1019,7 +1117,72 @@ export const prerender = false
 
 <script>
   import { onPageLoad } from '@/lib/page-lifecycle'
-  import { marked } from 'marked'
+  import katex from 'katex'
+  import { marked, type Tokens } from 'marked'
+
+  // Admin 预览使用 marked，而站点正文由 remark-math + rehype-katex 渲染。
+  // 这里用同一套 KaTeX 解析 $...$ / $$...$$，保证预览与前台一致。
+  const escapeHtml = (value: string) =>
+    value.replace(
+      /[&<>"']/g,
+      (char) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] ?? char
+    )
+
+  function renderMath(tex: string, displayMode: boolean) {
+    try {
+      return katex.renderToString(tex.trim(), {
+        displayMode,
+        throwOnError: false,
+        strict: false
+      })
+    } catch {
+      return `<code class="math-error">${escapeHtml(tex.trim())}</code>`
+    }
+  }
+
+  marked.use({
+    extensions: [
+      {
+        name: 'blockMath',
+        level: 'block',
+        start(src: string) {
+          const index = src.indexOf('$$')
+          return index < 0 ? undefined : index
+        },
+        tokenizer(src: string) {
+          const block = /^\$\$[ \t]*\n([\s\S]+?)\n\$\$[ \t]*(?:\n+|$)/.exec(src)
+          if (block) {
+            return { type: 'blockMath', raw: block[0], text: block[1] }
+          }
+          const single = /^\$\$[ \t]*([^\n$]+?)[ \t]*\$\$[ \t]*(?:\n+|$)/.exec(src)
+          if (single) {
+            return { type: 'blockMath', raw: single[0], text: single[1] }
+          }
+          return undefined
+        },
+        renderer(token: Tokens.Generic) {
+          return `<div class="math-block">${renderMath(token.text ?? '', true)}</div>`
+        }
+      },
+      {
+        name: 'inlineMath',
+        level: 'inline',
+        start(src: string) {
+          const index = src.indexOf('$')
+          return index < 0 ? undefined : index
+        },
+        tokenizer(src: string) {
+          const match = /^\$(?![\s$])((?:\\.|[^$\n])*?[^\s$])\$(?!\d)/.exec(src)
+          if (!match) return undefined
+          return { type: 'inlineMath', raw: match[0], text: match[1] }
+        },
+        renderer(token: Tokens.Generic) {
+          return renderMath(token.text ?? '', false)
+        }
+      }
+    ]
+  })
 
   onPageLoad((signal) => {
     type ApiEnvelope<T> = {
@@ -1111,6 +1274,8 @@ export const prerender = false
     const settingsTitle = $<HTMLElement>('#admin-settings-title')
     const settingsHint = $<HTMLElement>('#admin-settings-hint')
     const localeHint = $<HTMLElement>('#admin-locale-hint')
+    const ownershipHint = $<HTMLElement>('#admin-ownership-hint')
+    const formatHint = $<HTMLElement>('#admin-format-hint')
     const fields = {
       id: $<HTMLInputElement>('#admin-id'),
       locale: $<HTMLSelectElement>('#admin-locale'),
@@ -1121,6 +1286,7 @@ export const prerender = false
       tags: $<HTMLInputElement>('#admin-tags'),
       noteType: $<HTMLSelectElement>('#admin-note-type'),
       noteStatus: $<HTMLSelectElement>('#admin-note-status'),
+      ownership: $<HTMLSelectElement>('#admin-ownership'),
       format: $<HTMLSelectElement>('#admin-format'),
       body: $<HTMLTextAreaElement>('#admin-body'),
       draft: $<HTMLInputElement>('#admin-draft'),
@@ -1216,7 +1382,23 @@ export const prerender = false
     }
 
     function collectionLabel(value: Collection = collection) {
-      return value === 'posts' ? '文章' : '笔记'
+      return value === 'posts' ? 'blog' : 'notes'
+    }
+
+    function syncOwnership() {
+      if (fields.ownership) fields.ownership.value = collection === 'posts' ? 'blog' : 'notes'
+      if (ownershipHint) {
+        ownershipHint.textContent =
+          collection === 'posts'
+            ? 'blog 发布到 /blog。切换归属会新建对应类型的内容。'
+            : 'notes 发布到 /notes。切换归属会新建对应类型的内容。'
+      }
+      if (formatHint) {
+        formatHint.textContent =
+          collection === 'posts'
+            ? 'blog 默认 MDX（.mdx），可手动改为 Markdown。'
+            : 'notes 默认 Markdown（.md），可手动改为 MDX。'
+      }
     }
 
     function setConnection(state: 'idle' | 'connecting' | 'ok' | 'warn' | 'error', text: string) {
@@ -1228,14 +1410,14 @@ export const prerender = false
     }
 
     function patchHeader() {
-      if (formTitle) formTitle.textContent = `${editingId ? '编辑' : '写'}${collectionLabel()}`
-      if (listTitle) listTitle.textContent = `${collectionLabel()}列表`
-      if (settingsTitle) settingsTitle.textContent = `${collectionLabel()}设置`
+      if (formTitle) formTitle.textContent = `${editingId ? '编辑' : '写'} ${collectionLabel()}`
+      if (listTitle) listTitle.textContent = `${collectionLabel()} 列表`
+      if (settingsTitle) settingsTitle.textContent = `${collectionLabel()} 设置`
       if (settingsHint) {
         settingsHint.textContent =
           collection === 'posts'
-            ? 'URL ID、日期、语言、标签、格式'
-            : 'URL ID、日期、语言、标签、类型、格式'
+            ? '归属、URL ID、日期、语言、标签、格式'
+            : '归属、URL ID、日期、语言、标签、类型、格式'
       }
       if (fields.description) {
         fields.description.placeholder =
@@ -1249,6 +1431,7 @@ export const prerender = false
         fields.locale.title = editingId ? '编辑现有内容时语言固定' : ''
       }
       syncDraftUi()
+      syncOwnership()
     }
 
     function syncDraftUi() {
@@ -1628,41 +1811,188 @@ export const prerender = false
     function applyMarkdown(action: string) {
       const textarea = fields.body
       if (!textarea) return
+
+      if (action === 'undo' || action === 'redo') {
+        textarea.focus()
+        document.execCommand(action)
+        updateCounters()
+        schedulePreview()
+        return
+      }
+
+      const value = textarea.value
       const start = textarea.selectionStart
       const end = textarea.selectionEnd
-      const selected = textarea.value.slice(start, end)
+      const selected = value.slice(start, end)
 
-      if (action === 'heading' || action === 'quote' || action === 'list') {
-        const prefix = action === 'heading' ? '## ' : action === 'quote' ? '> ' : '- '
-        const value = textarea.value
-        const lineStart = value.lastIndexOf('\n', start - 1) + 1
-        const nextBreak = value.indexOf('\n', end)
-        const lineEnd = nextBreak === -1 ? value.length : nextBreak
-        const block = value.slice(lineStart, lineEnd)
-        const updated = block
-          .split('\n')
-          .map((line) => (line.trim() ? `${prefix}${line}` : line))
-          .join('\n')
-        textarea.setRangeText(updated, lineStart, lineEnd, 'select')
-      } else {
-        const [before, after, fallback] =
-          action === 'bold'
-            ? ['**', '**', '加粗文字']
-            : action === 'italic'
-              ? ['*', '*', '斜体文字']
-              : action === 'link'
-                ? ['[', '](https://)', '链接文字']
-                : ['`', '`', '代码']
-        const replacement = `${before}${selected || fallback}${after}`
-        textarea.setRangeText(replacement, start, end, 'end')
-        if (!selected) {
-          textarea.setSelectionRange(start + before.length, start + before.length + fallback.length)
+      // execCommand keeps toolbar edits in the browser's native undo stack;
+      // setRangeText is the fallback for browsers that refuse it.
+      const insertText = (
+        from: number,
+        to: number,
+        text: string,
+        caretStart?: number,
+        caretEnd?: number
+      ) => {
+        const before = textarea.value
+        textarea.focus()
+        textarea.setSelectionRange(from, to)
+        const inserted = document.execCommand('insertText', false, text)
+        if (!inserted && textarea.value === before) {
+          textarea.setRangeText(text, from, to, 'end')
         }
+        if (caretStart != null) {
+          textarea.setSelectionRange(caretStart, caretEnd ?? caretStart)
+        }
+        textarea.dispatchEvent(new Event('input', { bubbles: true }))
+        updateCounters()
+        schedulePreview()
       }
-      textarea.focus()
-      textarea.dispatchEvent(new Event('input', { bubbles: true }))
-      updateCounters()
-      schedulePreview()
+
+      const wrapInline = (before: string, after: string, placeholder: string) => {
+        const content = selected || placeholder
+        const caretStart = start + before.length
+        insertText(
+          start,
+          end,
+          `${before}${content}${after}`,
+          caretStart,
+          caretStart + content.length
+        )
+      }
+
+      const lineStart = value.lastIndexOf('\n', start - 1) + 1
+      const nextBreak = value.indexOf('\n', end)
+      const lineEnd = nextBreak === -1 ? value.length : nextBreak
+      const blockText = value.slice(lineStart, lineEnd)
+      const blockLines = blockText.split('\n')
+      const contentLines = blockLines.filter((line) => line.trim())
+      const hasContent = contentLines.length > 0
+
+      const replaceBlock = (transform: (line: string, index: number) => string) => {
+        const updated = blockLines.map(transform).join('\n')
+        insertText(lineStart, lineEnd, updated, lineStart, lineStart + updated.length)
+      }
+
+      if (action === 'h1' || action === 'h2' || action === 'h3') {
+        const prefix = `${'#'.repeat(Number(action[1]))} `
+        if (!hasContent) {
+          replaceBlock((line, index) => (index === 0 ? prefix : line))
+          return
+        }
+        replaceBlock((line) => {
+          if (!line.trim()) return line
+          return `${prefix}${line.replace(/^\s{0,3}#{1,6}\s+/, '')}`
+        })
+        return
+      }
+
+      if (action === 'ul' || action === 'ol') {
+        const bulletPattern = /^\s*[-*+]\s+/
+        const orderedPattern = /^\s*\d+\.\s+/
+        const targetPattern = action === 'ul' ? bulletPattern : orderedPattern
+        if (!hasContent) {
+          insertText(lineStart, lineEnd, action === 'ul' ? '- ' : '1. ')
+          return
+        }
+        const removePrefix = (line: string) =>
+          line.replace(bulletPattern, '').replace(orderedPattern, '')
+        if (contentLines.every((line) => targetPattern.test(line))) {
+          replaceBlock((line) => (line.trim() ? removePrefix(line) : line))
+          return
+        }
+        let index = 0
+        replaceBlock((line) => {
+          if (!line.trim()) return line
+          if (action === 'ul') return `- ${removePrefix(line)}`
+          index += 1
+          return `${index}. ${removePrefix(line)}`
+        })
+        return
+      }
+
+      if (action === 'quote') {
+        const quotePattern = /^\s*>\s?/
+        if (!hasContent) {
+          insertText(lineStart, lineEnd, '> ')
+          return
+        }
+        const allQuoted = contentLines.every((line) => quotePattern.test(line))
+        replaceBlock((line) => {
+          if (!line.trim()) return line
+          const content = line.replace(quotePattern, '')
+          return `${allQuoted ? '' : '> '}${content}`
+        })
+        return
+      }
+
+      if (action === 'hr') {
+        const insertion = `${blockText.trim() ? '\n' : ''}---`
+        insertText(lineEnd, lineEnd, insertion, lineEnd + insertion.length)
+        return
+      }
+
+      if (action === 'codeblock') {
+        const leading = start > 0 && value[start - 1] !== '\n' ? '\n' : ''
+        const trailing = end < value.length && value[end] !== '\n' ? '\n' : ''
+        const body = selected ? `${selected}\n` : '\n'
+        const replacement = `${leading}\`\`\`\n${body}\`\`\`${trailing}`
+        insertText(start, end, replacement, start + leading.length + 3)
+        return
+      }
+
+      if (action === 'mathblock') {
+        const leading = start > 0 && value[start - 1] !== '\n' ? '\n' : ''
+        const trailing = end < value.length && value[end] !== '\n' ? '\n' : ''
+        const body = selected.trim() || 'x^2'
+        const replacement = `${leading}$$\n${body}\n$$${trailing}`
+        const bodyStart = start + leading.length + 3
+        insertText(
+          start,
+          end,
+          replacement,
+          selected ? bodyStart + body.length : bodyStart,
+          selected ? bodyStart + body.length : bodyStart + body.length
+        )
+        return
+      }
+
+      if (action === 'link') {
+        const text = selected.trim()
+        if (/^https?:\/\/\S+$/i.test(text)) {
+          const label = '链接文字'
+          insertText(start, end, `[${label}](${text})`, start + 1, start + 1 + label.length)
+          return
+        }
+        const label = selected || '链接文字'
+        const urlStart = start + label.length + 3
+        insertText(start, end, `[${label}](https://)`, urlStart, urlStart + 'https://'.length)
+        return
+      }
+
+      if (action === 'image') {
+        const text = selected.trim()
+        if (/^https?:\/\/\S+$/i.test(text)) {
+          const alt = '图片描述'
+          insertText(start, end, `![${alt}](${text})`, start + 2, start + 2 + alt.length)
+          return
+        }
+        const alt = selected || '图片描述'
+        const urlStart = start + alt.length + 4
+        insertText(start, end, `![${alt}](https://)`, urlStart, urlStart + 'https://'.length)
+        return
+      }
+
+      const inline: Record<string, [string, string, string]> = {
+        bold: ['**', '**', '加粗文字'],
+        italic: ['*', '*', '斜体文字'],
+        underline: ['<u>', '</u>', '下划线文字'],
+        strike: ['~~', '~~', '删除文字'],
+        code: ['`', '`', '代码'],
+        math: ['$', '$', 'x^2']
+      }
+      const wrapper = inline[action]
+      if (wrapper) wrapInline(...wrapper)
     }
 
     function autosaveKey() {
@@ -1981,18 +2311,30 @@ export const prerender = false
       }
     })
 
+    function switchCollection(next: Collection) {
+      if (next === collection) return
+      window.clearTimeout(autosaveTimer)
+      persistAutosave()
+      setCollection(next, false)
+      resetForm()
+      if (token) loadList(loadedLocale)
+      fields.body?.focus()
+    }
+
     for (const button of collectionButtons) {
       button.addEventListener('click', () => {
-        const next = button.dataset.collection as Collection
-        if (next === collection) return
-        window.clearTimeout(autosaveTimer)
-        persistAutosave()
-        setCollection(next, false)
-        resetForm()
-        if (token) loadList(loadedLocale)
-        fields.body?.focus()
+        switchCollection(button.dataset.collection as Collection)
       })
     }
+
+    fields.ownership?.addEventListener('change', () => {
+      const next = fields.ownership?.value === 'notes' ? 'notes' : 'posts'
+      if (next === collection) {
+        syncOwnership()
+        return
+      }
+      switchCollection(next)
+    })
 
     form?.addEventListener('submit', async (event) => {
       event.preventDefault()
@@ -2160,10 +2502,31 @@ export const prerender = false
         form?.requestSubmit()
         return
       }
-      if (event.target !== fields.body) return
-      if (key === 'b' || key === 'i' || key === 'k') {
+      if (event.target !== fields.body || event.isComposing) return
+
+      let action = ''
+      if (event.altKey && !event.shiftKey) {
+        action =
+          ({ Digit1: 'h1', Digit2: 'h2', Digit3: 'h3' } as Record<string, string>)[event.code] ?? ''
+      } else if (event.shiftKey) {
+        action =
+          (
+            {
+              KeyX: 'strike',
+              Digit7: 'ol',
+              Digit8: 'ul',
+              Period: 'quote',
+              Backquote: 'codeblock'
+            } as Record<string, string>
+          )[event.code] ?? ''
+      } else {
+        action =
+          ({ b: 'bold', i: 'italic', u: 'underline', k: 'link' } as Record<string, string>)[key] ??
+          ''
+      }
+      if (action) {
         event.preventDefault()
-        applyMarkdown(key === 'b' ? 'bold' : key === 'i' ? 'italic' : 'link')
+        applyMarkdown(action)
       }
     })
 
@@ -2184,6 +2547,9 @@ export const prerender = false
     }
 
     for (const button of markdownButtons) {
+      // Keep the textarea focused (and its selection intact) while clicking
+      // toolbar buttons so undo history and the caret position survive.
+      button.addEventListener('mousedown', (event) => event.preventDefault())
       button.addEventListener('click', () => {
         const action = button.dataset.md
         if (action) applyMarkdown(action)
