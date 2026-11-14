@@ -4,6 +4,138 @@ import 'katex/dist/katex.min.css'
 import BaseLayout from '@/layouts/BaseLayout.astro'
 
 export const prerender = false
+
+type MathSnippet = {
+  label: string
+  tex: string
+  /** 插入后默认选中的占位片段，方便直接替换。 */
+  select?: string
+  /** 块级公式会单独成段，与文章里的 $$...$$ 保持一致。 */
+  display?: boolean
+}
+
+const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[] }[] = [
+  {
+    title: '基础',
+    items: [
+      { label: '分数', tex: String.raw`\frac{a}{b}`, select: 'a' },
+      { label: '幂', tex: String.raw`x^{n}`, select: 'n' },
+      { label: '下标', tex: String.raw`a_{i}`, select: 'i' },
+      { label: '平方根', tex: String.raw`\sqrt{x}`, select: 'x' },
+      { label: 'n 次根', tex: String.raw`\sqrt[n]{x}`, select: 'n' },
+      { label: '括号', tex: String.raw`\left( x \right)`, select: 'x' },
+      { label: '绝对值', tex: String.raw`\left| x \right|`, select: 'x' },
+      { label: '组合数', tex: String.raw`\binom{n}{k}`, select: 'n' }
+    ]
+  },
+  {
+    title: '求和 / 积分 / 极限',
+    display: true,
+    items: [
+      { label: '求和', tex: String.raw`\sum_{i=1}^{n} a_i`, select: 'i=1' },
+      { label: '连乘', tex: String.raw`\prod_{i=1}^{n} a_i`, select: 'i=1' },
+      { label: '积分', tex: String.raw`\int_{a}^{b} f(x)\,\mathrm{d}x`, select: 'a' },
+      {
+        label: '二重积分',
+        tex: String.raw`\iint_{D} f(x,y)\,\mathrm{d}x\,\mathrm{d}y`,
+        select: 'D'
+      },
+      {
+        label: '极限',
+        tex: String.raw`\lim_{x \to \infty} f(x)`,
+        select: String.raw`x \to \infty`
+      },
+      { label: '导数', tex: String.raw`\frac{\mathrm{d}y}{\mathrm{d}x}`, select: 'y' },
+      { label: '偏导', tex: String.raw`\frac{\partial f}{\partial x}`, select: 'f' }
+    ]
+  },
+  {
+    title: '运算与关系',
+    items: [
+      { label: '≠', tex: String.raw`\neq` },
+      { label: '≤', tex: String.raw`\leq` },
+      { label: '≥', tex: String.raw`\geq` },
+      { label: '≈', tex: String.raw`\approx` },
+      { label: '∝', tex: String.raw`\propto` },
+      { label: '±', tex: String.raw`\pm` },
+      { label: '×', tex: String.raw`\times` },
+      { label: '÷', tex: String.raw`\div` },
+      { label: '·', tex: String.raw`\cdot` },
+      { label: '∞', tex: String.raw`\infty` }
+    ]
+  },
+  {
+    title: '希腊字母',
+    items: [
+      { label: 'α', tex: String.raw`\alpha` },
+      { label: 'β', tex: String.raw`\beta` },
+      { label: 'γ', tex: String.raw`\gamma` },
+      { label: 'δ', tex: String.raw`\delta` },
+      { label: 'θ', tex: String.raw`\theta` },
+      { label: 'λ', tex: String.raw`\lambda` },
+      { label: 'μ', tex: String.raw`\mu` },
+      { label: 'π', tex: String.raw`\pi` },
+      { label: 'σ', tex: String.raw`\sigma` },
+      { label: 'φ', tex: String.raw`\varphi` },
+      { label: 'ω', tex: String.raw`\omega` },
+      { label: 'Δ', tex: String.raw`\Delta` },
+      { label: 'Σ', tex: String.raw`\Sigma` },
+      { label: 'Ω', tex: String.raw`\Omega` }
+    ]
+  },
+  {
+    title: '矩阵 / 分段',
+    display: true,
+    items: [
+      {
+        label: '矩阵',
+        tex: String.raw`\begin{matrix} a & b \\ c & d \end{matrix}`,
+        select: 'a & b'
+      },
+      {
+        label: '括号矩阵',
+        tex: String.raw`\begin{pmatrix} a & b \\ c & d \end{pmatrix}`,
+        select: 'a & b'
+      },
+      {
+        label: '行列式',
+        tex: String.raw`\begin{vmatrix} a & b \\ c & d \end{vmatrix}`,
+        select: 'a & b'
+      },
+      {
+        label: '分段函数',
+        tex: String.raw`f(x) = \begin{cases} x, & x \geq 0 \\ -x, & x < 0 \end{cases}`,
+        select: 'x, & x \\geq 0'
+      },
+      {
+        label: '多行对齐',
+        tex: String.raw`\begin{aligned} a &= b + c \\ d &= e + f \end{aligned}`,
+        select: 'a &= b + c'
+      }
+    ]
+  },
+  {
+    title: '箭头 / 集合 / 装饰',
+    items: [
+      { label: '→', tex: String.raw`\to` },
+      { label: '⇒', tex: String.raw`\Rightarrow` },
+      { label: '⇔', tex: String.raw`\Leftrightarrow` },
+      { label: '∈', tex: String.raw`\in` },
+      { label: '∉', tex: String.raw`\notin` },
+      { label: '⊆', tex: String.raw`\subseteq` },
+      { label: '∪', tex: String.raw`\cup` },
+      { label: '∩', tex: String.raw`\cap` },
+      { label: '∀', tex: String.raw`\forall` },
+      { label: '∃', tex: String.raw`\exists` },
+      { label: '∅', tex: String.raw`\emptyset` },
+      { label: 'ℝ', tex: String.raw`\mathbb{R}` },
+      { label: '向量', tex: String.raw`\vec{v}`, select: 'v' },
+      { label: '估计', tex: String.raw`\hat{x}`, select: 'x' },
+      { label: '平均', tex: String.raw`\bar{x}`, select: 'x' },
+      { label: '上划线', tex: String.raw`\overline{AB}`, select: 'AB' }
+    ]
+  }
+]
 ---
 
 <BaseLayout meta={{ title: '管理后台', description: 'Jayluo blog 内容管理入口。', noindex: true }}>
@@ -169,6 +301,53 @@ export const prerender = false
               <button type='button' data-md='hr' title='分割线'>分割线</button>
             </div>
           </div>
+
+          <details id='admin-math' class='admin-math'>
+            <summary class='admin-math-summary'>
+              <span>数学公式</span>
+              <span class='admin-math-hint'>KaTeX · 展开后点击模板即可插入</span>
+            </summary>
+            <div class='admin-math-body'>
+              <section class='admin-math-group'>
+                <p class='admin-math-label'>快速插入</p>
+                <div class='admin-math-grid'>
+                  <button type='button' data-md='math' title='把选中的文字包成行内公式'>
+                    行内公式 $…$
+                  </button>
+                  <button type='button' data-md='mathblock' title='插入独立成段的显示公式'>
+                    块级公式 $$…$$
+                  </button>
+                </div>
+              </section>
+              {
+                mathSnippetGroups.map((group) => (
+                  <section class='admin-math-group'>
+                    <p class='admin-math-label'>{group.title}</p>
+                    <div class='admin-math-grid'>
+                      {group.items.map((snippet) => (
+                        <button
+                          type='button'
+                          data-math-tex={snippet.tex}
+                          data-math-select={snippet.select}
+                          data-math-display={
+                            (snippet.display ?? group.display) ? 'block' : 'inline'
+                          }
+                          title={`${(snippet.display ?? group.display) ? '块级' : '行内'}公式：${snippet.tex}`}
+                        >
+                          {snippet.label}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ))
+              }
+              <p class='admin-math-note'>
+                行内公式用 <code>$…$</code>，块级公式用单独成段的 <code>$$…$$</code
+                >；预览与文章正文使用同一套 KaTeX 渲染。
+              </p>
+            </div>
+          </details>
+
           <span id='admin-body-stats' class='admin-body-stats'>0 字 · 约 1 分钟</span>
         </div>
 
@@ -667,6 +846,101 @@ export const prerender = false
     text-underline-offset: 0.14em;
   }
 
+  .admin-math {
+    flex: 1 1 100%;
+    order: 4;
+    border: 1px solid hsl(var(--glass-edge));
+    border-radius: 10px;
+    background: hsl(var(--glass-panel-fallback) / 0.24);
+  }
+
+  .admin-math-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.42rem 0.7rem;
+    cursor: pointer;
+    list-style: none;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.8rem;
+    font-weight: 520;
+  }
+
+  .admin-math-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .admin-math[open] .admin-math-summary {
+    border-bottom: 1px solid hsl(var(--glass-edge));
+    color: hsl(var(--foreground));
+  }
+
+  .admin-math-hint {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.72rem;
+    font-weight: 400;
+  }
+
+  .admin-math-body {
+    display: grid;
+    gap: 0.65rem;
+    max-height: 17rem;
+    overflow: auto;
+    padding: 0.7rem;
+  }
+
+  .admin-math-group {
+    display: grid;
+    gap: 0.32rem;
+  }
+
+  .admin-math-label {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .admin-math-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .admin-math-grid button {
+    border: 1px solid hsl(var(--glass-edge));
+    border-radius: 8px;
+    background: transparent;
+    color: hsl(var(--foreground));
+    padding: 0.2rem 0.52rem;
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .admin-math-grid button:hover {
+    border-color: hsl(var(--primary) / 0.45);
+    background: hsl(var(--muted) / 0.75);
+  }
+
+  .admin-math-note {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.72rem;
+    line-height: 1.6;
+  }
+
+  .admin-math-note code {
+    padding-inline: 0.2rem;
+    border-radius: 4px;
+    background: hsl(var(--muted) / 0.6);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
   .admin-body-stats {
     color: hsl(var(--muted-foreground));
     font:
@@ -1141,41 +1415,53 @@ export const prerender = false
     }
   }
 
+  /** 跳过被反斜杠转义的 $，避免把 \$ 当成公式起点。 */
+  function findMathStart(src: string) {
+    for (let index = 0; index < src.length; index += 1) {
+      if (src[index] !== '$') continue
+      let slashes = 0
+      for (let cursor = index - 1; cursor >= 0 && src[cursor] === '\\'; cursor -= 1) {
+        slashes += 1
+      }
+      if (slashes % 2 === 0) return index
+    }
+    return -1
+  }
+
   marked.use({
     extensions: [
       {
+        // remark-math 只有「$$ 单独成行 + 内容独占若干行 + $$ 单独成行」才是块级公式；
+        // 行内的 $x$ / $$x$$ 都按行内公式渲染。
         name: 'blockMath',
         level: 'block',
-        start(src: string) {
-          const index = src.indexOf('$$')
-          return index < 0 ? undefined : index
-        },
         tokenizer(src: string) {
-          const block = /^\$\$[ \t]*\n([\s\S]+?)\n\$\$[ \t]*(?:\n+|$)/.exec(src)
-          if (block) {
-            return { type: 'blockMath', raw: block[0], text: block[1] }
-          }
-          const single = /^\$\$[ \t]*([^\n$]+?)[ \t]*\$\$[ \t]*(?:\n+|$)/.exec(src)
-          if (single) {
-            return { type: 'blockMath', raw: single[0], text: single[1] }
-          }
-          return undefined
+          const block = /^ {0,3}\$\$[ \t]*\n([\s\S]*?)\n {0,3}\$\$[ \t]*(?:\n+|$)/.exec(src)
+          if (!block) return undefined
+          return { type: 'blockMath', raw: block[0], text: block[1] }
         },
         renderer(token: Tokens.Generic) {
           return `<div class="math-block">${renderMath(token.text ?? '', true)}</div>`
         }
       },
       {
+        // 允许 $...$ 与 $$...$$ 两种行内写法，并允许公式内部出现空格（与 remark-math 一致）。
         name: 'inlineMath',
         level: 'inline',
         start(src: string) {
-          const index = src.indexOf('$')
+          const index = findMathStart(src)
           return index < 0 ? undefined : index
         },
         tokenizer(src: string) {
-          const match = /^\$(?![\s$])((?:\\.|[^$\n])*?[^\s$])\$(?!\d)/.exec(src)
-          if (!match) return undefined
-          return { type: 'inlineMath', raw: match[0], text: match[1] }
+          const double = /^\$\$((?:\\.|(?!\$\$)[\s\S])*?)\$\$/.exec(src)
+          if (double) {
+            return { type: 'inlineMath', raw: double[0], text: double[1] }
+          }
+          const single = /^\$((?:\\.|(?!\$)[\s\S])*?)\$/.exec(src)
+          if (single) {
+            return { type: 'inlineMath', raw: single[0], text: single[1] }
+          }
+          return undefined
         },
         renderer(token: Tokens.Generic) {
           return renderMath(token.text ?? '', false)
@@ -1808,6 +2094,82 @@ export const prerender = false
       return window.matchMedia('(min-width: 1000px)').matches ? 'split' : 'write'
     }
 
+    // execCommand 能保留浏览器原生的撤销栈，但部分移动端浏览器会「报告成功却没有写入」。
+    // 因此始终以 textarea.value 是否真的变化为准，没变化就退回 setRangeText。
+    function insertIntoBody(
+      from: number,
+      to: number,
+      text: string,
+      caretStart?: number,
+      caretEnd?: number
+    ) {
+      const textarea = fields.body
+      if (!textarea) return
+      const before = textarea.value
+      textarea.focus()
+      textarea.setSelectionRange(from, to)
+      let applied = false
+      try {
+        applied =
+          typeof document.execCommand === 'function' &&
+          document.execCommand('insertText', false, text)
+      } catch {
+        applied = false
+      }
+      if (!applied || textarea.value === before) {
+        textarea.setRangeText(text, from, to, 'end')
+      }
+      const caret = caretStart ?? from + text.length
+      textarea.setSelectionRange(caret, caretEnd ?? caret)
+      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+      updateCounters()
+      schedulePreview()
+    }
+
+    /** 给块级公式前后补空行，让预览与文章里的 remark-math 都按块级公式解析。 */
+    function blockBoundary(start: number, end: number) {
+      const value = fields.body?.value ?? ''
+      const lineStart = value.lastIndexOf('\n', start - 1) + 1
+      let leading = ''
+      if (start > 0 && value[start - 1] !== '\n') {
+        leading = '\n\n'
+      } else if (start > 0) {
+        const prevLineStart = value.lastIndexOf('\n', lineStart - 2) + 1
+        if (value.slice(prevLineStart, lineStart - 1).trim()) leading = '\n'
+      }
+
+      let trailing = ''
+      if (end < value.length && value[end] !== '\n') {
+        trailing = '\n\n'
+      } else if (end < value.length) {
+        const nextBreak = value.indexOf('\n', end + 1)
+        const nextLine = value.slice(end + 1, nextBreak === -1 ? value.length : nextBreak)
+        if (nextLine.trim()) trailing = '\n'
+      }
+      return { leading, trailing }
+    }
+
+    function insertMathSnippet(tex: string, display: boolean, select?: string) {
+      const textarea = fields.body
+      if (!textarea) return
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      let payload = ''
+      let offset = 0
+      if (display) {
+        const { leading, trailing } = blockBoundary(start, end)
+        payload = `${leading}$$\n${tex}\n$$${trailing}`
+        offset = leading.length + '$$\n'.length
+      } else {
+        payload = `$${tex}$`
+        offset = 1
+      }
+      const selectIndex = select ? tex.indexOf(select) : -1
+      const caretStart = start + offset + (selectIndex >= 0 ? selectIndex : tex.length)
+      const caretEnd = caretStart + (selectIndex >= 0 ? (select?.length ?? 0) : 0)
+      insertIntoBody(start, end, payload, caretStart, caretEnd)
+    }
+
     function applyMarkdown(action: string) {
       const textarea = fields.body
       if (!textarea) return
@@ -1824,30 +2186,7 @@ export const prerender = false
       const start = textarea.selectionStart
       const end = textarea.selectionEnd
       const selected = value.slice(start, end)
-
-      // execCommand keeps toolbar edits in the browser's native undo stack;
-      // setRangeText is the fallback for browsers that refuse it.
-      const insertText = (
-        from: number,
-        to: number,
-        text: string,
-        caretStart?: number,
-        caretEnd?: number
-      ) => {
-        const before = textarea.value
-        textarea.focus()
-        textarea.setSelectionRange(from, to)
-        const inserted = document.execCommand('insertText', false, text)
-        if (!inserted && textarea.value === before) {
-          textarea.setRangeText(text, from, to, 'end')
-        }
-        if (caretStart != null) {
-          textarea.setSelectionRange(caretStart, caretEnd ?? caretStart)
-        }
-        textarea.dispatchEvent(new Event('input', { bubbles: true }))
-        updateCounters()
-        schedulePreview()
-      }
+      const insertText = insertIntoBody
 
       const wrapInline = (before: string, after: string, placeholder: string) => {
         const content = selected || placeholder
@@ -1892,7 +2231,19 @@ export const prerender = false
         const orderedPattern = /^\s*\d+\.\s+/
         const targetPattern = action === 'ul' ? bulletPattern : orderedPattern
         if (!hasContent) {
-          insertText(lineStart, lineEnd, action === 'ul' ? '- ' : '1. ')
+          // 只插入一个空标记时，紧跟段落的 “- ” 会被 Markdown 当成 setext 标题，
+          // “1. ” 会被并进上一段。带一个选中的占位词既能立刻看到列表，
+          // 又不会在预览/发布后变成别的块。
+          const marker = action === 'ul' ? '- ' : '1. '
+          const placeholder = '列表项'
+          const content = `${marker}${placeholder}`
+          insertText(
+            lineStart,
+            lineEnd,
+            content,
+            lineStart + marker.length,
+            lineStart + content.length
+          )
           return
         }
         const removePrefix = (line: string) =>
@@ -1942,18 +2293,12 @@ export const prerender = false
       }
 
       if (action === 'mathblock') {
-        const leading = start > 0 && value[start - 1] !== '\n' ? '\n' : ''
-        const trailing = end < value.length && value[end] !== '\n' ? '\n' : ''
+        const { leading, trailing } = blockBoundary(start, end)
         const body = selected.trim() || 'x^2'
         const replacement = `${leading}$$\n${body}\n$$${trailing}`
-        const bodyStart = start + leading.length + 3
-        insertText(
-          start,
-          end,
-          replacement,
-          selected ? bodyStart + body.length : bodyStart,
-          selected ? bodyStart + body.length : bodyStart + body.length
-        )
+        const bodyStart = start + leading.length + '$$\n'.length
+        // 选中公式主体，直接输入即可替换掉示例内容。
+        insertText(start, end, replacement, bodyStart, bodyStart + body.length)
         return
       }
 
@@ -2553,6 +2898,22 @@ export const prerender = false
       button.addEventListener('click', () => {
         const action = button.dataset.md
         if (action) applyMarkdown(action)
+      })
+    }
+
+    const mathDetails = $<HTMLDetailsElement>('#admin-math')
+    // 展开/收起面板时不要把焦点从正文移走，选区才能原样保留。
+    mathDetails
+      ?.querySelector('summary')
+      ?.addEventListener('mousedown', (event) => event.preventDefault())
+
+    for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-math-tex]')) {
+      button.addEventListener('mousedown', (event) => event.preventDefault())
+      button.addEventListener('click', () => {
+        const tex = button.dataset.mathTex
+        if (!tex) return
+        const display = button.dataset.mathDisplay === 'block'
+        insertMathSnippet(tex, display, button.dataset.mathSelect || undefined)
       })
     }
 
