@@ -144,7 +144,7 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
       <div>
         <p class='admin-eyebrow'>JAYLUO / ADMIN</p>
         <h1>内容管理</h1>
-        <p class='admin-subtitle'>在这里写草稿，保存后由 blog 机器人润色发布。</p>
+        <p class='admin-subtitle'>在这里写作，草稿与已发布状态一目了然。</p>
       </div>
       <div class='admin-toolbar-actions'>
         <span id='admin-connection' class='admin-chip' data-state='idle'>未连接</span>
@@ -470,10 +470,15 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
         </details>
 
         <div class='admin-form-actions'>
-          <label class='admin-check'>
-            <input id='admin-draft' type='checkbox' checked />
-            <span>保存为草稿（不公开）</span>
-          </label>
+          <div class='admin-publish'>
+            <span class='admin-publish-label'>发布状态</span>
+            <div class='admin-segmented' role='group' aria-label='发布状态'>
+              <button type='button' data-draft-state='true' class='is-active'>草稿</button>
+              <button type='button' data-draft-state='false'>已发布</button>
+            </div>
+            <span id='admin-draft-hint' class='admin-hint'>草稿只保存在仓库，不会出现在站点。</span>
+            <input id='admin-draft' type='checkbox' checked hidden />
+          </div>
           <div class='admin-form-buttons'>
             <button class='admin-btn admin-btn-ghost' type='button' id='admin-reset'>新建</button>
             <button class='admin-btn admin-save' type='submit' id='admin-submit'>保存草稿</button>
@@ -485,11 +490,31 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
 
     <section class='admin-card'>
       <div class='admin-card-head'>
-        <h2 id='admin-list-title'>文章列表</h2>
-        <span class='admin-eyebrow'>按日期倒序 · 含草稿</span>
+        <div>
+          <h2 id='admin-list-title'>文章列表</h2>
+          <p class='admin-list-hint'>草稿与已发布分开显示。草稿只存在公开仓库里，站点不会渲染。</p>
+        </div>
+        <span class='admin-eyebrow'>按日期倒序 · 草稿 / 已发布分组</span>
       </div>
-      <div id='admin-list' class='admin-list'>
-        <p class='admin-status'>连接 token 后自动加载。</p>
+      <div class='admin-list-groups'>
+        <section class='admin-list-group' data-list-group='draft'>
+          <header class='admin-list-group-head'>
+            <h3>草稿</h3>
+            <span id='admin-draft-count' class='admin-count'>0</span>
+          </header>
+          <div id='admin-list-drafts' class='admin-list'>
+            <p class='admin-status'>连接 token 后自动加载。</p>
+          </div>
+        </section>
+        <section class='admin-list-group' data-list-group='published'>
+          <header class='admin-list-group-head'>
+            <h3>已发布</h3>
+            <span id='admin-published-count' class='admin-count'>0</span>
+          </header>
+          <div id='admin-list-published' class='admin-list'>
+            <p class='admin-status'>连接 token 后自动加载。</p>
+          </div>
+        </section>
       </div>
     </section>
 
@@ -1028,7 +1053,7 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     overflow-x: auto;
   }
 
-  .admin-preview-empty {
+  :global(.admin-preview-empty) {
     color: hsl(var(--muted-foreground));
     font-size: 0.9rem;
   }
@@ -1095,20 +1120,64 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     display: none;
   }
 
-  .admin-check {
+  .admin-publish {
     display: flex;
-    gap: 0.6rem;
     align-items: center;
-    color: hsl(var(--muted-foreground));
-    font-size: 0.9rem;
-    font-weight: 450;
-    cursor: pointer;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    min-width: 0;
   }
 
-  .admin-check input {
-    width: 1rem;
-    height: 1rem;
-    accent-color: hsl(var(--primary));
+  .admin-publish-label {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.8rem;
+    font-weight: 560;
+    white-space: nowrap;
+  }
+
+  .admin-publish .admin-hint {
+    flex: 1 1 15rem;
+    min-width: 0;
+  }
+
+  .admin-segmented {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.16rem;
+    border: 1px solid hsl(var(--glass-edge));
+    border-radius: 999px;
+    background: hsl(var(--glass-panel-fallback) / 0.3);
+  }
+
+  .admin-segmented button {
+    border: 0;
+    background: transparent;
+    color: hsl(var(--muted-foreground));
+    border-radius: 999px;
+    padding: 0.24rem 0.72rem;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 540;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .admin-segmented button:hover {
+    background: hsl(var(--muted) / 0.75);
+    color: hsl(var(--foreground));
+  }
+
+  .admin-segmented button.is-active[data-draft-state='true'] {
+    background: hsl(var(--primary) / 0.16);
+    color: hsl(var(--primary));
+  }
+
+  .admin-segmented button.is-active[data-draft-state='false'] {
+    background: hsl(var(--primary) / 0.9);
+    color: hsl(var(--primary-foreground));
   }
 
   .admin-form-actions {
@@ -1125,7 +1194,8 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     min-width: 8.5rem;
   }
 
-  .admin-btn {
+  /* 列表行和按钮由脚本动态创建，没有 Astro 的 scoped 标记，需显式 global。 */
+  :global(.admin-btn) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1147,63 +1217,114 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
       opacity 0.18s ease;
   }
 
-  .admin-btn:hover {
+  :global(.admin-btn:hover) {
     background: hsl(var(--primary));
   }
 
-  .admin-btn:focus-visible {
+  :global(.admin-btn:focus-visible) {
     outline: 2px solid hsl(var(--primary) / 0.5);
     outline-offset: 2px;
   }
 
-  .admin-btn:disabled {
+  :global(.admin-btn:disabled) {
     opacity: 0.62;
     cursor: progress;
   }
 
-  .admin-btn-ghost {
+  :global(.admin-btn-ghost) {
     background: transparent;
     color: hsl(var(--foreground));
   }
 
-  .admin-btn-ghost:hover {
+  :global(.admin-btn-ghost:hover) {
     background: hsl(var(--muted) / 0.82);
   }
 
-  .admin-btn-ghost.is-active {
+  :global(.admin-btn-ghost.is-active) {
     background: hsl(var(--primary) / 0.14);
     border-color: hsl(var(--primary) / 0.4);
     color: hsl(var(--foreground));
   }
 
-  .admin-btn-danger {
+  :global(.admin-btn-danger) {
     background: hsl(var(--destructive) / 0.78);
     color: hsl(var(--destructive-foreground));
   }
 
-  .admin-status {
+  :global(.admin-status) {
     margin-block: 0;
     color: hsl(var(--muted-foreground));
     font-size: 0.88rem;
   }
 
-  .admin-status[data-state='success'] {
+  :global(.admin-status[data-state='success']) {
     color: hsl(var(--primary));
   }
 
-  .admin-status[data-state='error'] {
+  :global(.admin-status[data-state='error']) {
     color: hsl(var(--destructive));
+  }
+
+  .admin-list-hint {
+    margin: 0.22rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.8rem;
+  }
+
+  .admin-list-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .admin-list-group {
+    display: grid;
+    gap: 0.55rem;
+    min-width: 0;
+  }
+
+  .admin-list-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid hsl(var(--glass-edge));
+  }
+
+  .admin-list-group[data-list-group='draft'] .admin-list-group-head {
+    border-bottom-color: hsl(var(--primary) / 0.4);
+  }
+
+  .admin-list-group-head h3 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 620;
+  }
+
+  .admin-count {
+    min-width: 1.7rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: hsl(var(--muted) / 0.8);
+    color: hsl(var(--muted-foreground));
+    font:
+      500 0.72rem 'JetBrains Mono',
+      ui-monospace,
+      monospace;
+    text-align: center;
   }
 
   .admin-list {
     display: grid;
     gap: 0.7rem;
-    max-height: 34rem;
+    max-height: 24rem;
     overflow: auto;
     padding-right: 0.15rem;
   }
 
-  .admin-row {
+  :global(.admin-row) {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -1217,12 +1338,12 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
       background-color 0.18s ease;
   }
 
-  .admin-row:hover {
+  :global(.admin-row:hover) {
     background: hsl(var(--glass-panel-hover));
     border-color: hsl(var(--glass-edge-hover));
   }
 
-  .admin-row-title {
+  :global(.admin-row-title) {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
@@ -1233,23 +1354,32 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     text-decoration: none;
   }
 
-  .admin-row-title:hover {
+  :global(.admin-row-title:hover) {
     color: hsl(var(--primary));
   }
 
-  .admin-row-draft {
+  :global(.admin-row-draft),
+  :global(.admin-row-published) {
     padding: 0.05rem 0.4rem;
     border-radius: 999px;
-    background: hsl(var(--primary) / 0.14);
-    color: hsl(var(--primary));
     font:
       500 0.66rem 'JetBrains Mono',
       ui-monospace,
       monospace;
   }
 
-  .admin-row-meta,
-  .admin-result-meta {
+  :global(.admin-row-draft) {
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
+  }
+
+  :global(.admin-row-published) {
+    background: hsl(var(--muted) / 0.8);
+    color: hsl(var(--muted-foreground));
+  }
+
+  :global(.admin-row-meta),
+  :global(.admin-result-meta) {
     margin-top: 0.2rem;
     color: hsl(var(--muted-foreground));
     font:
@@ -1258,13 +1388,13 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
       monospace;
   }
 
-  .admin-row-actions {
+  :global(.admin-row-actions) {
     display: inline-flex;
     gap: 0.35rem;
     flex-shrink: 0;
   }
 
-  .admin-row-btn {
+  :global(.admin-row-btn) {
     height: 1.95rem;
     min-width: 3rem;
   }
@@ -1337,7 +1467,7 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     background: hsl(var(--muted) / 0.55);
   }
 
-  .admin-result-meta {
+  :global(.admin-result-meta) {
     display: grid;
   }
 
@@ -1345,6 +1475,14 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     .admin-writing-head,
     .admin-media-grid {
       grid-template-columns: 1fr;
+    }
+
+    .admin-list-groups {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-list {
+      max-height: 20rem;
     }
 
     .admin-panes[data-view='split'] {
@@ -1540,7 +1678,10 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     const authInput = $<HTMLInputElement>('#admin-token')
     const authBadge = $<HTMLElement>('#admin-auth-badge')
     const connectionBadge = $<HTMLElement>('#admin-connection')
-    const listPanel = $<HTMLElement>('#admin-list')
+    const draftList = $<HTMLElement>('#admin-list-drafts')
+    const publishedList = $<HTMLElement>('#admin-list-published')
+    const draftCount = $<HTMLElement>('#admin-draft-count')
+    const publishedCount = $<HTMLElement>('#admin-published-count')
     const listTitle = $<HTMLElement>('#admin-list-title')
     const refreshButton = $<HTMLButtonElement>('#admin-refresh')
     const resultPanel = $<HTMLElement>('#admin-result')
@@ -1548,6 +1689,7 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     const formTitle = $<HTMLElement>('#admin-form-title')
     const formContext = $<HTMLElement>('#admin-form-context')
     const draftChip = $<HTMLElement>('#admin-draft-chip')
+    const draftHint = $<HTMLElement>('#admin-draft-hint')
     const titleCount = $<HTMLElement>('#admin-title-count')
     const descriptionCount = $<HTMLElement>('#admin-desc-count')
     const bodyStats = $<HTMLElement>('#admin-body-stats')
@@ -1590,6 +1732,9 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     )
     const collectionButtons = Array.from(
       document.querySelectorAll<HTMLButtonElement>('button[data-collection]')
+    )
+    const draftStateButtons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('button[data-draft-state]')
     )
 
     if (!app || !form) return
@@ -1722,10 +1867,20 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
 
     function syncDraftUi() {
       const draft = Boolean(fields.draft?.checked)
+      for (const button of draftStateButtons) {
+        const active = (button.dataset.draftState === 'true') === draft
+        button.classList.toggle('is-active', active)
+        button.setAttribute('aria-pressed', String(active))
+      }
       if (draftChip) {
         draftChip.textContent = draft ? '草稿' : '已发布'
         draftChip.classList.toggle('admin-chip-draft', draft)
         draftChip.classList.toggle('admin-chip-published', !draft)
+      }
+      if (draftHint) {
+        draftHint.textContent = draft
+          ? '草稿会提交到公开仓库，但站点不会渲染。'
+          : '发布后会提交到 main，站点构建完成后前台可见。'
       }
       if (fields.submit) {
         fields.submit.textContent = draft ? '保存草稿' : '保存并发布'
@@ -2496,41 +2651,65 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
       patchHeader()
     }
 
+    function statusLine(text: string) {
+      const line = document.createElement('p')
+      line.className = 'admin-status'
+      line.textContent = text
+      return line
+    }
+
+    function setCounts(drafts: number | null, published: number | null) {
+      if (draftCount) draftCount.textContent = drafts === null ? '—' : String(drafts)
+      if (publishedCount) publishedCount.textContent = published === null ? '—' : String(published)
+    }
+
     async function loadList(locale: Locale = loadedLocale) {
-      if (!token || !listPanel) return
+      if (!token || !draftList || !publishedList) return
       const requestId = ++listRequest
       if (refreshButton) refreshButton.disabled = true
-      listPanel.replaceChildren()
-      const loading = document.createElement('p')
-      loading.className = 'admin-status'
-      loading.textContent = '正在加载...'
-      listPanel.append(loading)
+      draftList.replaceChildren(statusLine('正在加载草稿...'))
+      publishedList.replaceChildren(statusLine('正在加载已发布...'))
+      setCounts(null, null)
       try {
-        const query = new URLSearchParams({
-          locale,
-          limit: '50',
-          offset: '0',
-          draft: 'all',
-          includeBody: 'false'
-        })
-        const response = await api(`${collection}?${query.toString()}`)
-        if (!response.ok) throw new Error(await failMessage(response))
-        const result = (await response.json()) as ApiEnvelope<ApiRecord[]>
-        if (requestId !== listRequest) return
-        const records = result.data ?? []
-        listPanel.replaceChildren(...records.map((record) => addRecordRow(record, locale)))
-        if (records.length === 0) {
-          const empty = document.createElement('p')
-          empty.className = 'admin-status'
-          empty.textContent = '还没有内容。'
-          listPanel.append(empty)
+        const request = async (draft: 'only' | 'published') => {
+          const query = new URLSearchParams({
+            locale,
+            limit: '50',
+            offset: '0',
+            draft,
+            includeBody: 'false'
+          })
+          const response = await api(`${collection}?${query.toString()}`)
+          if (!response.ok) throw new Error(await failMessage(response))
+          return (await response.json()) as ApiEnvelope<ApiRecord[]>
         }
+        // 两个状态分别取，避免「最近的 50 条全是已发布」时草稿被截断。
+        const [draftResult, publishedResult] = await Promise.all([
+          request('only'),
+          request('published')
+        ])
+        if (requestId !== listRequest) return
+        const drafts = draftResult.data ?? []
+        const published = publishedResult.data ?? []
+        draftList.replaceChildren(...renderListGroup(drafts, locale, true))
+        publishedList.replaceChildren(...renderListGroup(published, locale, false))
+        setCounts(drafts.length, published.length)
       } catch (error) {
         if (requestId !== listRequest) return
-        loading.textContent = `加载失败 ${errorMessage(error)}`
+        const message = `加载失败 ${errorMessage(error)}`
+        draftList.replaceChildren(statusLine(message))
+        publishedList.replaceChildren(statusLine(message))
+        setCounts(null, null)
       } finally {
         if (requestId === listRequest && refreshButton) refreshButton.disabled = false
       }
+    }
+
+    function renderListGroup(records: ApiRecord[], locale: Locale, draft: boolean) {
+      if (records.length === 0) {
+        return [statusLine(draft ? '没有草稿。' : '还没有已发布内容。')]
+      }
+      return records.map((record) => addRecordRow(record, locale, draft))
     }
 
     function button(parent: HTMLElement, label: string, handler: () => void) {
@@ -2543,7 +2722,36 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
       return item
     }
 
-    function addRecordRow(record: ApiRecord, locale: Locale) {
+    async function changeDraft(record: ApiRecord, locale: Locale, draft: boolean) {
+      const id = String(record.id)
+      const editingThis = editingId === id
+      try {
+        const response = await api(`${collection}/${encodeURIComponent(id)}?locale=${locale}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ draft })
+        })
+        if (!response.ok) throw new Error(await failMessage(response))
+        if (editingThis) {
+          if (fields.draft) fields.draft.checked = draft
+          syncDraftUi()
+          queueAutosave()
+        }
+        await loadList(locale)
+        showResult(
+          draft
+            ? '已转为草稿，前台将不再显示。'
+            : editingThis
+              ? '已发布。编辑器里的未保存改动仍需点击「保存并发布」。'
+              : '已发布，站点构建后可见。',
+          undefined,
+          'success'
+        )
+      } catch (error) {
+        showResult(`${draft ? '转为草稿' : '发布'}失败 ${errorMessage(error)}`, undefined, 'error')
+      }
+    }
+
+    function addRecordRow(record: ApiRecord, locale: Locale, draft: boolean) {
       const row = document.createElement('article')
       row.className = 'admin-row'
       const info = document.createElement('div')
@@ -2555,12 +2763,10 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
         title.rel = 'noopener noreferrer'
       }
       title.append(String(record.title ?? record.id))
-      if (record.draft) {
-        const badge = document.createElement('span')
-        badge.className = 'admin-row-draft'
-        badge.textContent = '草稿'
-        title.append(badge)
-      }
+      const badge = document.createElement('span')
+      badge.className = draft ? 'admin-row-draft' : 'admin-row-published'
+      badge.textContent = draft ? '草稿' : '已发布'
+      title.append(badge)
       info.append(title)
       const meta = document.createElement('p')
       meta.className = 'admin-row-meta'
@@ -2575,6 +2781,14 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
       info.append(meta)
       const actions = document.createElement('div')
       actions.className = 'admin-row-actions'
+      if (draft) {
+        button(actions, '发布', () => changeDraft(record, locale, false))
+      } else {
+        button(actions, '转为草稿', async () => {
+          if (!confirm('转为草稿后，前台将不再显示这条内容。继续?')) return
+          await changeDraft(record, locale, true)
+        })
+      }
       button(actions, '编辑', async () => {
         window.clearTimeout(autosaveTimer)
         persistAutosave()
@@ -2717,11 +2931,14 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
         clearAutosave(previousAutosaveKey)
         clearAutosave()
         if (autosaveBar) autosaveBar.hidden = true
+        // 以服务端记录为准同步状态，保证列表分组与编辑器一致。
+        const draft =
+          record.draft === undefined ? Boolean(fields.draft?.checked) : Boolean(record.draft)
+        if (fields.draft) fields.draft.checked = draft
         patchHeader()
         updateCounters()
-        const draft = Boolean(fields.draft?.checked)
         showResult(
-          wasCreating ? (draft ? '草稿已保存。' : '内容已发布。') : '内容已保存。',
+          draft ? '草稿已保存。' : wasCreating ? '内容已发布。' : '内容已更新并发布。',
           result.meta,
           'success'
         )
@@ -2815,6 +3032,17 @@ const mathSnippetGroups: { title: string; display?: boolean; items: MathSnippet[
     })
 
     fields.draft?.addEventListener('change', syncDraftUi)
+
+    for (const button of draftStateButtons) {
+      button.addEventListener('click', () => {
+        if (!fields.draft) return
+        const next = button.dataset.draftState !== 'false'
+        if (fields.draft.checked === next) return
+        fields.draft.checked = next
+        // 手动触发 change，让编辑器状态、自动保存和表单监听保持一致。
+        fields.draft.dispatchEvent(new Event('change', { bubbles: true }))
+      })
+    }
 
     fields.title?.addEventListener('input', updateCounters)
     fields.description?.addEventListener('input', updateCounters)
