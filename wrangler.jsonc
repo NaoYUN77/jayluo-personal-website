@@ -37,6 +37,14 @@
       "bucket_name": "jayluo-media"
     }
   ],
+  "previews": {
+    "r2_buckets": [
+      {
+        "binding": "MEDIA",
+        "bucket_name": "jayluo-media"
+      }
+    ]
+  },
   "observability": {
     "enabled": true
   }
